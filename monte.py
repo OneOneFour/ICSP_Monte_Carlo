@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as npr
-
+import matthew as mc
 
 class Grid:
     X, Y = None
@@ -31,7 +31,7 @@ class Grid:
             # generate a list of prey
             ani = [beast for beast in self.population if
                    isinstance(beast, Prey) and beast.pos == pred.pos and beast.alive]
-            cull = culmBiom(pred.eat, len(ani), npr.uniform())
+            cull = mc.culmBinom(pred.eat, len(ani), npr.uniform())
             for die in range(cull):
                 pred.eat(die)
 
