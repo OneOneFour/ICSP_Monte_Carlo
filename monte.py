@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.random as npr
 import matplotlib.pyplot as plt
+import copy
 class World:
     predCounter = []
     preyCounter = []
@@ -13,6 +14,8 @@ class World:
     def step(self):
         World.addQueue.clear()
         World.t += 1
+        self.predCounter.append(len(self.population["Predator"]))
+        self.preyCounter.append(len(self.population["Prey"]))
         for key in World.population:
             for ani in World.population[key]:
                 ani.step()
@@ -23,8 +26,7 @@ class World:
             for ani in World.population[key]:
                 if not ani.alive:
                     World.population[key].remove(ani)
-        self.predCounter.append(len(self.population["Predator"]))
-        self.preyCounter.append(len(self.population["Prey"]))
+
     @staticmethod
     def getPrey():
         return World.population['Prey']
@@ -33,7 +35,8 @@ class World:
         if animal.name not in World.addQueue:
             World.addQueue[animal.name] = []
         World.addQueue[animal.name].append(animal)
-
+    def SpawnNow(self,prefab,count):
+        self.population[prefab.name] = [copy.deepcopy(prefab) for a in range(count)]
 
 class Animal:
     name = "Animal"
@@ -74,17 +77,19 @@ class Predator(Animal):
         self.growFromKillDev = growFromKillDev
 
     def step(self):
+        if not self.alive:
+            return
         self.eat(World.getPrey())#get the prey
         Animal.step(self)
 
     def eat(self,prey):
-        for meal in range(int(npr.normal(self.expectedKill,self.killDev))):
+        for meal in range(int(round(npr.normal(self.expectedKill,self.killDev)))):
             if meal >= len(prey):
                 break
             if not prey[meal].alive:
                 continue
             prey[meal].kill()
-            for baby in range(int(npr.normal(self.expectedGrowFromKill,self.growFromKillDev))):
+            for baby in range(int(round(npr.normal(self.expectedGrowFromKill,self.growFromKillDev)))):
                 World.Spawn(Predator(self.expectedKill,self.killDev,self.expectedGrowFromKill,self.growFromKillDev,self.mExpect,self.stdExpect,self.name))
                 #Spawn Baby next step
 
@@ -99,19 +104,21 @@ class Prey(Animal):
         self.growDev = growDev
 
     def step(self):
+        if not self.alive:
+            return
         self.rollGrow()
         Animal.step(self)
 
     def rollGrow(self):
-        for baby in range(int(npr.normal(self.expectGrow,self.growDev))):
+        for baby in range(int(round(npr.normal(self.expectGrow,self.growDev)))):
             World.Spawn(Prey(self.expectGrow,self.growDev,self.mExpect,self.stdExpect,self.name))
 
 
 world = World()
-world.population['Predator'] = [Predator(3,0.2,1.5,0.2,10,1,"Predator")]
-world.population['Prey'] = [Prey(1.5,0.2,20,1,"Prey")]
+world.SpawnNow(Predator(5,0.5,5,0.6,10,1,"Predator"),40)
+world.SpawnNow(Prey(0.3,0.3,20,5,"Prey"),20)
 for i in range(30):
     world.step()
-
-plt.plot(np.arange(0,30,1),world.preyCounter)
-plt.plot(np.arange(0,30,1),world.predCounter)
+plt.plot(range(30),world.preyCounter,"b-")
+plt.plot(range(30),world.predCounter,"r-")
+plt.show()
