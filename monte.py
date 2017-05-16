@@ -1,94 +1,117 @@
 import numpy as np
 import numpy.random as npr
-import matthew as mc
-
-class Grid:
-    X, Y = None
+import matplotlib.pyplot as plt
+class World:
+    predCounter = []
+    preyCounter = []
     population = None
-    grid = None
+    addQueue = None
     t = 0
+    def __init__(self):
+        World.population = {}
+        World.addQueue = {}
+    def step(self):
+        World.addQueue.clear()
+        World.t += 1
+        for key in World.population:
+            for ani in World.population[key]:
+                ani.step()
+        #cull the old
+        for key in World.population:
+            if key in World.addQueue:
+                World.population[key].extend(World.addQueue[key])
+            for ani in World.population[key]:
+                if not ani.alive:
+                    World.population[key].remove(ani)
+        self.predCounter.append(len(self.population["Predator"]))
+        self.preyCounter.append(len(self.population["Prey"]))
+    @staticmethod
+    def getPrey():
+        return World.population['Prey']
+    @staticmethod
+    def Spawn(animal):
+        if animal.name not in World.addQueue:
+            World.addQueue[animal.name] = []
+        World.addQueue[animal.name].append(animal)
 
-    def __init__(self, X, Y):
-        self.X = X
-        self.Y = Y
-        self.population = []
-
-    def append(self, obj, x, y):
-        self.population.append(obj)
-
-    def step(self):  # step simulation by one
-        self.t += 1
-        # Moving - Loop through pop find beas
-        predList = [beast for beast in self.population if isinstance(beast, Predator)][:]# <- Maybe not needed
-        # for x in range(self.X):
-        #   for y in range(self.Y):
-        #      # find the beasts here
-        #       cell = [beast for beast in copyList if beast.pos == (x, y)]
-        #       predNo = sum([1 for beast in copyList if isinstance(beast, Predator)])
-        #       preyNo = len(cell) - predNo
-        #  for 
-        for pred in predList:
-            # generate a list of prey
-            ani = [beast for beast in self.population if
-                   isinstance(beast, Prey) and beast.pos == pred.pos and beast.alive]
-            cull = mc.culmBinom(pred.eat, len(ani), npr.uniform())
-            for die in range(cull):
-                pred.eat(die)
 
 class Animal:
-    pos = None
+    name = "Animal"
     alive = True
-    _pmove = 0  # Probabilty of moving from square this step
-    #  Probability of growing given a catch (Quite high)
+    mExpect = 0
+    stdExpect = 0
+    lifeExpect = 0 # Mean age of death #std dev is 1.5 steps?
     age = 0
 
-    def __init__(self, pmove, pos):
-        self.pos = pos
-        self._pmove = pmove
-        Grid.population.append(self)  # I don't like this - Rob
+    def __init__(self,meanExpectancey,stdExpectancy,name):
+        self.lifeExpect = np.floor(npr.normal(meanExpectancey,stdExpectancy))
+        self.name = name
+        self.mExpect = meanExpectancey
+        self.stdExpect = stdExpectancy
 
-    def move(self):
-        if npr.uniform() <= self._pmove:
-            self.pos += npr.randint(0, 1, (1, 2))[0] * 2 - 1
-            self.pos[0] %= Grid.X
-            self.pos[1] %= Grid.Y
-        else:
-            return
+    def step(self):
+        self.age+= 1
+        if self.age > self.lifeExpect:
+            self.kill()
+        return
 
     def kill(self):
         self.alive = False
-        Grid.population.remove(self)
-
-    def checkStatus(self):
-        return self.alive
 
 
 class Predator(Animal):
-    pdie = 0
-    pabsorb = 0
-    peat = 0
+    expectedKill = 0
+    killDev = 0
+    expectedGrowFromKill=0
+    growFromKillDev =0
 
-    def __init__(self, pmove, pdie, pabsorb, peat, pos):
-        Animal.__init__(self, pmove, pos)
-        self.pdie = pdie
-        self.pabsorb = pabsorb
-        self.peat = peat
+    def __init__(self,killExpect,killDev,expectedGrowFromKill,growFromKillDev,mExpect,stdExpect,name):
+        Animal.__init__(self,mExpect,stdExpect,self.name)
+        self.expectedKill = killExpect
+        self.name = name
+        self.killDev = killDev
+        self.expectedGrowFromKill = expectedGrowFromKill
+        self.growFromKillDev = growFromKillDev
 
-    def eat(self, culling):
-        culling.kill()
-        if npr.uniform() <= self.pabsorb:
-            Grid.population.append(Predator(self._pmove, self.pdie, self.pabsorb, self.peat, self.pos))
+    def step(self):
+        self.eat(World.getPrey())#get the prey
+        Animal.step(self)
+
+    def eat(self,prey):
+        for meal in range(int(npr.normal(self.expectedKill,self.killDev))):
+            if meal >= len(prey):
+                break
+            if not prey[meal].alive:
+                continue
+            prey[meal].kill()
+            for baby in range(int(npr.normal(self.expectedGrowFromKill,self.growFromKillDev))):
+                World.Spawn(Predator(self.expectedKill,self.killDev,self.expectedGrowFromKill,self.growFromKillDev,self.mExpect,self.stdExpect,self.name))
+                #Spawn Baby next step
 
 
 class Prey(Animal):
-    __pbirth = 0
+    expectGrow = 0 #mean number of babies each step
+    growDev = 0
 
-    def __init__(self, pmove, pbirth, pos):
-        Animal.__init__(self, pmove, pos)
-        self.__pbirth = pbirth
+    def __init__(self,expectGrow,growDev,mExpect,stdExpect,name):
+        Animal.__init__(self,mExpect,stdExpect,name)
+        self.expectGrow = expectGrow
+        self.growDev = growDev
 
-    def birth(self):
-        if npr.uniform() <= self.__pbirth:
-            Grid.population.append(Prey(self._pmove, self.__pbirth, self.pos))
-        else:
-            return
+    def step(self):
+        self.rollGrow()
+        Animal.step(self)
+
+    def rollGrow(self):
+        for baby in range(int(npr.normal(self.expectGrow,self.growDev))):
+            World.Spawn(Prey(self.expectGrow,self.growDev,self.mExpect,self.stdExpect,self.name))
+
+
+world = World()
+world.population['Predator'] = [Predator(3,0.2,1.5,0.2,10,1,"Predator")]
+world.population['Prey'] = [Prey(1.5,0.2,20,1,"Prey")]
+for i in range(30):
+    world.step()
+
+plt.plot(np.arange(0,30,1),world.preyCounter)
+plt.plot(np.arange(0,30,1),world.predCounter)
