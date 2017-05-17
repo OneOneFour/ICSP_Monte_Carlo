@@ -2,15 +2,19 @@ import numpy as np
 import numpy.random as npr
 import matplotlib.pyplot as plt
 import copy
+
+
 class World:
     predCounter = []
     preyCounter = []
     population = None
     addQueue = None
     t = 0
+
     def __init__(self):
         World.population = {}
         World.addQueue = {}
+
     def step(self):
         World.addQueue.clear()
         World.t += 1
@@ -19,7 +23,7 @@ class World:
         for key in World.population:
             for ani in World.population[key]:
                 ani.step()
-        #cull the old
+        # cull the old
         for key in World.population:
             if key in World.addQueue:
                 World.population[key].extend(World.addQueue[key])
@@ -28,32 +32,46 @@ class World:
                     World.population[key].remove(ani)
 
     @staticmethod
+    def getPreyCount():
+        return len(World.getPrey())
+
+    @staticmethod
     def getPrey():
         return World.population['Prey']
+
+    def getPredators(self):
+        return self.population['Predator']
+
     @staticmethod
     def Spawn(animal):
         if animal.name not in World.addQueue:
             World.addQueue[animal.name] = []
         World.addQueue[animal.name].append(animal)
-    def SpawnNow(self,prefab,count):
+
+    def SpawnNow(self, prefab, count):
         self.population[prefab.name] = [copy.deepcopy(prefab) for a in range(count)]
 
+
 class Animal:
+    id = 0
+    count = 0
     name = "Animal"
     alive = True
     mExpect = 0
     stdExpect = 0
-    lifeExpect = 0 # Mean age of death #std dev is 1.5 steps?
+    lifeExpect = 0  # Mean age of death #std dev is 1.5 steps?
     age = 0
 
-    def __init__(self,meanExpectancey,stdExpectancy,name):
-        self.lifeExpect = np.floor(npr.normal(meanExpectancey,stdExpectancy))
+    def __init__(self, meanExpectancey, stdExpectancy, name):
+        self.id = Animal.count
+        Animal.count += 1
+        self.lifeExpect = np.floor(npr.normal(meanExpectancey, stdExpectancy))
         self.name = name
         self.mExpect = meanExpectancey
         self.stdExpect = stdExpectancy
 
     def step(self):
-        self.age+= 1
+        self.age += 1
         if self.age > self.lifeExpect:
             self.kill()
         return
@@ -65,11 +83,11 @@ class Animal:
 class Predator(Animal):
     expectedKill = 0
     killDev = 0
-    expectedGrowFromKill=0
-    growFromKillDev =0
+    expectedGrowFromKill = 0
+    growFromKillDev = 0
 
-    def __init__(self,killExpect,killDev,expectedGrowFromKill,growFromKillDev,mExpect,stdExpect,name):
-        Animal.__init__(self,mExpect,stdExpect,self.name)
+    def __init__(self, killExpect, killDev, expectedGrowFromKill, growFromKillDev, mExpect, stdExpect, name):
+        Animal.__init__(self, mExpect, stdExpect, self.name)
         self.expectedKill = killExpect
         self.name = name
         self.killDev = killDev
@@ -79,27 +97,28 @@ class Predator(Animal):
     def step(self):
         if not self.alive:
             return
-        self.eat(World.getPrey())#get the prey
+        self.eat(World.getPrey())  # get the prey
         Animal.step(self)
 
-    def eat(self,prey):
-        for meal in range(int(round(npr.normal(self.expectedKill,self.killDev)))):
+    def eat(self, prey):
+        for meal in range(World.getPreyCount() * int(round(npr.normal(self.expectedKill, self.killDev)))):
             if meal >= len(prey):
                 break
             if not prey[meal].alive:
                 continue
             prey[meal].kill()
-            for baby in range(int(round(npr.normal(self.expectedGrowFromKill,self.growFromKillDev)))):
-                World.Spawn(Predator(self.expectedKill,self.killDev,self.expectedGrowFromKill,self.growFromKillDev,self.mExpect,self.stdExpect,self.name))
-                #Spawn Baby next step
+            for baby in range(int(round(npr.normal(self.expectedGrowFromKill, self.growFromKillDev)))):
+                World.Spawn(Predator(self.expectedKill, self.killDev, self.expectedGrowFromKill, self.growFromKillDev,
+                                     self.mExpect, self.stdExpect, self.name))
+                # Spawn Baby next step
 
 
 class Prey(Animal):
-    expectGrow = 0 #mean number of babies each step
+    expectGrow = 0  # mean number of babies each step
     growDev = 0
 
-    def __init__(self,expectGrow,growDev,mExpect,stdExpect,name):
-        Animal.__init__(self,mExpect,stdExpect,name)
+    def __init__(self, expectGrow, growDev, mExpect, stdExpect, name):
+        Animal.__init__(self, mExpect, stdExpect, name)
         self.expectGrow = expectGrow
         self.growDev = growDev
 
@@ -110,15 +129,6 @@ class Prey(Animal):
         Animal.step(self)
 
     def rollGrow(self):
-        for baby in range(int(round(npr.normal(self.expectGrow,self.growDev)))):
-            World.Spawn(Prey(self.expectGrow,self.growDev,self.mExpect,self.stdExpect,self.name))
+        for baby in range(int(round(npr.normal(self.expectGrow, self.growDev)))):
+            World.Spawn(Prey(self.expectGrow, self.growDev, self.mExpect, self.stdExpect, self.name))
 
-
-world = World()
-world.SpawnNow(Predator(5,0.5,5,0.6,10,1,"Predator"),40)
-world.SpawnNow(Prey(0.3,0.3,20,5,"Prey"),20)
-for i in range(30):
-    world.step()
-plt.plot(range(30),world.preyCounter,"b-")
-plt.plot(range(30),world.predCounter,"r-")
-plt.show()
