@@ -8,6 +8,7 @@ def culmBinom(p, n):
         prob -= (p**s)*((1-p)**(n-s))*(scm.comb(n, s)) #adjust the parameters of prob to allow for the new number of events
         if rand > prob: #see if the randomly generated number lies in the region corresponding to s events
             return(s) #if the randomly generated number lies within the section for this area of prob, retun the number of successes
+            break
         else:
             s += 1
 
