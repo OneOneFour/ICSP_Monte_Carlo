@@ -1,7 +1,11 @@
+import datetime
+
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random as npr
-import matplotlib.pyplot as plt
 import scipy.misc as scm
+
+import ProjectFunctions as pf
 
 
 def culmBinom(p, n):
@@ -151,9 +155,10 @@ class Prey(Animal):  # mean number of babies each step
             world.Spawn(Prey(self.mgrow, self.stdgrow, self.mExpect, self.stdExpect, self.name))
 
 
+alpha, beta, gamma, delta = 1, 0.2, 0.6, 1
 world = World()
-world.SpawnPrey(1.0, 0.25, 500, 1.0, 10)
-world.SpawnPredator(0.1, 0.1, 3, 0.25, 1, 0.5, 10)
+world.SpawnPrey(alpha, 0.25, 500, 1.0, 20)
+world.SpawnPredator(beta / (alpha + 1), 0.1, gamma / delta, 0.25, 1 / delta, 0.5, 20)
 
 ##Remeber p = beta/(alpha+1)
 i = 25
@@ -164,7 +169,8 @@ for c in range(i):
 plt.plot(np.arange(i), world.preyCounter, 'b-', label="prey")
 plt.plot(np.arange(i), world.predCounter, 'r-', label="predator")
 plt.legend()
+filename = (datetime.datetime.now().ctime() + "output").replace(":", "")
+plt.gcf().savefig(filename + ".png")
 plt.show()
-
-
+pf.saveValues(alpha, beta, gamma, delta, filename + ".csv")
 # Output
