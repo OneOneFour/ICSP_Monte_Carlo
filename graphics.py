@@ -13,8 +13,8 @@ font = pygame.font.Font(None,25)
 predtext = font.render("Predator",1,(0,0,0))
 preytext = font.render("Prey",1,(0,0,0))
 world = monte.World()
-world.SpawnNow(monte.Predator(0.66,0.3,1.0,0.5,2,1,"Predator"),10)
-world.SpawnNow(monte.Prey(0.66,0.3,4.0,2.0,"Prey"),15)
+world.SpawnNow(monte.Predator(0.2,0.3,1.5,0.5,2,1,"Predator"),20)
+world.SpawnNow(monte.Prey(1.2,0.5,4.0,2.0,"Prey"),20)
 while isRunning:
     for event in  pygame.event.get():
         if event.type == pygame.QUIT:
