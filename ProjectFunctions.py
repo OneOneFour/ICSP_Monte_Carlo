@@ -11,11 +11,11 @@ def culmBinom(p, n):
         else:
             s += 1
 
-def saveValues(a, b, c, d, fdir, text=1):
+def saveValues(a, b, c, d, prey0, pred0, fdir, text=1):
     fd = open(fdir,'a')
     if text:
         print("Found the file....")
-    fd.write("{}, {}, {}, {}\n".format(a, b, c, d))
+    fd.write("{}, {}, {}, {}, {}, {}\n".format(a, b, c, d, prey0, pred0))
     if text:
         print("Saving....")
     fd.close()
