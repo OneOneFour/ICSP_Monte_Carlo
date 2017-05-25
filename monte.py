@@ -46,7 +46,7 @@ class World:
         for key in self.population:
             if key in self.addQueue:
                 self.population[key].extend(self.addQueue[key])
-            for ani in self.population[key]:
+            for ani in self.population[key][:]:
                 if not ani.alive:
                     self.population[key].remove(ani)
         for key in self.population:
@@ -101,11 +101,11 @@ class Animal:
     def __init__(self, meanExpectancey, stdExpectancy, name, loc):
         self.id = Animal.count
         Animal.count += 1
-        self.lifeExpect = np.floor(npr.normal(meanExpectancey, stdExpectancy))
+        self.lifeExpect = round(npr.normal(meanExpectancey, stdExpectancy))
         self.name = name
         self.mExpect = meanExpectancey
         self.stdExpect = stdExpectancy
-        self.loc = loc
+        self.loc = loc[:]
 
     def step(self, world):
         self.age += 1
@@ -177,13 +177,18 @@ class Prey(Animal):  # mean number of babies each step
             world.Spawn(Prey(self.mgrow, self.stdgrow, self.mExpect, self.stdExpect, self.name, self.loc))
 
 
-alpha, beta, gamma, delta = 1, 0.2, 0.6, 1
+tscale = 1
+prey0, pred0 = 100, 75
+alpha, beta, delta, gamma = 0.67, 1.33, 1, 1
+alpha1, beta1, delta1, gamma1 = alpha / tscale, beta / (pred0 * tscale), delta / (prey0 * tscale), gamma / tscale
 world = World()
-world.SpawnPrey(alpha, 0.25, 500, 1.0, 5, [0,0])
-world.SpawnPredator(beta / (alpha + 1), 0.1, gamma / delta, 0.25, 1 / delta, 0.5, 5, [1, 1])
+world.SpawnPrey(alpha1, 0.5 / (alpha1 * tscale), 500 * tscale, tscale, prey0, [0, 0])
+world.SpawnPredator(beta1 / (alpha1 + 1), 0.01 / tscale, delta1 / (beta1), beta1 / (delta1 * tscale), 1 / gamma1,
+                    tscale, pred0, [1, 1])
+
 
 ##Remeber p = beta/(alpha+1)
-i = 3
+i = 3 * tscale
 
 for c in range(i):
     world.step()
@@ -192,9 +197,9 @@ for c in range(i):
 plt.plot(np.arange(i), world.preyCounter, 'b-', label="prey")
 plt.plot(np.arange(i), world.predCounter, 'r-', label="predator")
 plt.legend()
-#filename = (datetime.datetime.now().ctime() + "output").replace(":", "")
-#plt.gcf().savefig(filename + ".png")
-#plt.show()
-#pf.saveValues(alpha, beta, gamma, delta, filename + ".csv")
+filename = "output/" + (datetime.datetime.now().ctime() + "output").replace(":", "")
+plt.gcf().savefig(filename + ".png")
+plt.show()
+pf.saveValues(alpha, beta, gamma, delta, prey0, pred0, filename + ".csv")
 # Output
 dir(Animal)
