@@ -1,6 +1,8 @@
-import scipy.misc as scm
 import numpy.random as npr
-def culmBinom(p, n):
+import scipy.misc as scm
+
+
+def culmBinomOld(p, n):
     s = 0
     prob = 1
     rand = npr.uniform() #generates a random number to compare the probability to
@@ -21,3 +23,18 @@ def saveValues(a, b, c, d, prey0, pred0, fdir, text=1):
     fd.close()
     if text:
         print("Saved!")
+
+
+def culmBinom(p, n):
+    if n is 0:
+        return 0
+    s = 0
+    prob = 1
+    rand = npr.uniform()  # generates a random number to compare the probability to
+    while True:
+        prob -= ((1 - p) ** (n - s)) * (p ** s) * (
+            scm.comb(n, s))  # adjust the parameters of prob to allow for the new number of events
+        if rand > prob:  # see if the randomly generated number lies in the region corresponding to s events
+            return s  # if the randomly generated number lies within the section for this area of prob, retun the number of successes
+        else:
+            s += 1
