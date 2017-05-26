@@ -23,7 +23,7 @@ def culmBinom(p, n):
 
 
 class World:
-    gridsize = 10
+    gridsize = 2
     predCounter = []
     preyCounter = []
     population = None
@@ -178,17 +178,17 @@ class Prey(Animal):  # mean number of babies each step
 
 
 tscale = 1
-prey0, pred0 = 100, 75
-alpha, beta, delta, gamma = 0.67, 1.33, 1, 1
+prey0, pred0 = 50, 75
+alpha, beta, delta, gamma = 0.5, 0.5, 0.5, 0.7
 alpha1, beta1, delta1, gamma1 = alpha / tscale, beta / (pred0 * tscale), delta / (prey0 * tscale), gamma / tscale
 world = World()
-world.SpawnPrey(alpha1, 0.5 / (alpha1 * tscale), 500 * tscale, tscale, prey0, [0, 0])
+world.SpawnPrey(alpha1, 0.05 / (alpha1 * tscale), 5 * tscale, tscale, prey0, [0, 0])
 world.SpawnPredator(beta1 / (alpha1 + 1), 0.01 / tscale, delta1 / (beta1), beta1 / (delta1 * tscale), 1 / gamma1,
                     tscale, pred0, [1, 1])
 
 
 ##Remeber p = beta/(alpha+1)
-i = 3 * tscale
+i = 20 * tscale
 
 for c in range(i):
     world.step()
@@ -198,8 +198,7 @@ plt.plot(np.arange(i), world.preyCounter, 'b-', label="prey")
 plt.plot(np.arange(i), world.predCounter, 'r-', label="predator")
 plt.legend()
 filename = "output/" + (datetime.datetime.now().ctime() + "output").replace(":", "")
-plt.gcf().savefig(filename + ".png")
+#plt.gcf().savefig(filename + ".png")
 plt.show()
-pf.saveValues(alpha, beta, gamma, delta, prey0, pred0, filename + ".csv")
+#pf.saveValues(alpha, beta, gamma, delta, prey0, pred0, filename + ".csv")
 # Output
-dir(Animal)
