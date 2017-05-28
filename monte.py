@@ -73,9 +73,9 @@ class World:
             self.addQueue[animal.name] = []
         self.addQueue[animal.name].append(animal)
 
-    def randSpawnPredator(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, count):
+    def randSpawnPredator(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, count, killRange):
         loc = [npr.uniform(self.gridsize), npr.uniform(self.gridsize)]
-        self.population['Predator'] = [Predator(mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, "Predator", loc) for a in
+        self.population['Predator'] = [Predator(mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, "Predator", loc, killRange) for a in
                                        range(count)]
 
     def randSpawnPrey(self, mgrow, stdgrow, mexpext, stdexpect, count):
@@ -135,14 +135,16 @@ class Predator(Animal):
     stdkill = 0
     mgrow = 0
     stdgrow = 0
+    killRange = 0
 
-    def __init__(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, name, loc):
+    def __init__(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, name, loc, killRange):
         Animal.__init__(self, mexpect, stdexpect, name, loc)
         self.mkill = mkill
         self.stdkill = stdkill
         self.mgrow = mgrow
         self.stdgrow = stdgrow
         self.pkill = npr.normal(mkill, stdkill)
+        self.killRange = killRange
 
     def step(self, world):
         Animal.step(self, world)
@@ -183,13 +185,14 @@ class Prey(Animal):  # mean number of babies each step
 
 
 tscale = 1
+killRange = 1
 prey0, pred0 = 50, 75
 alpha, beta, delta, gamma = 0.5, 0.5, 1.5, 0.7
 alpha1, beta1, delta1, gamma1 = alpha / tscale, beta / (pred0 * tscale), delta / (prey0 * tscale), gamma / tscale
 world = World(2)
 world.randSpawnPrey(alpha1, 0.05 / (alpha1 * tscale), 5 * tscale, tscale, prey0)
 world.randSpawnPredator(beta1 / (alpha1 + 1), 0.01 / tscale, delta1 / (beta1), beta1 / (delta1 * tscale), 1 / gamma1,
-                    tscale, pred0)
+                    tscale, pred0, killRange)
 
 
 ##Remeber p = beta/(alpha+1)
