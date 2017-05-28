@@ -1,5 +1,7 @@
 import scipy.misc as scm
+import numpy as np
 import numpy.random as npr
+import matplotlib.pyplot as plt
 def culmBinom(p, n):
     s = 0
     prob = 1
@@ -21,3 +23,26 @@ def saveValues(a, b, c, d, prey0, pred0, fdir, text=1):
     fd.close()
     if text:
         print("Saved!")
+
+def culmBinomNew(p, n):
+    s = 0
+    for i in range(n):
+        if npr.rand() >= p:
+            s += 1
+    return s
+
+trials = 2000
+events = 100
+p = 0.5
+
+old = np.zeros(events)
+new = np.zeros(events)
+
+for i in range(trials):
+    #old[culmBinom(n,p)] += 1
+    new[culmBinomNew(p, events)] += 1
+
+plt.plot(range(events), old)
+plt.plot(range(events), new)
+
+plt.show()
