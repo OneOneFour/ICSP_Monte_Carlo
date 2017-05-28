@@ -7,6 +7,8 @@ import scipy.misc as scm
 
 import ProjectFunctions as pf
 
+print ("I made it here")
+
 
 def culmBinom(p, n):
     if n is 0:
@@ -30,7 +32,8 @@ class World:
     addQueue = None
     t = 0
 
-    def __init__(self):
+    def __init__(self, gridsize):
+        self.gridsize = gridsize
         World.population = {}
         World.addQueue = {}
 
@@ -70,11 +73,13 @@ class World:
             self.addQueue[animal.name] = []
         self.addQueue[animal.name].append(animal)
 
-    def SpawnPredator(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, count, loc):
+    def randSpawnPredator(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, count):
+        loc = [npr.uniform(self.gridsize), npr.uniform(self.gridsize)]
         self.population['Predator'] = [Predator(mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, "Predator", loc) for a in
                                        range(count)]
 
-    def SpawnPrey(self, mgrow, stdgrow, mexpext, stdexpect, count, loc):
+    def randSpawnPrey(self, mgrow, stdgrow, mexpext, stdexpect, count):
+        loc = [npr.uniform(self.gridsize), npr.uniform(self.gridsize)]
         self.population['Prey'] = [Prey(mgrow, stdgrow, mexpext, stdexpect, "Prey", loc) for a in range(count)]
 
     def showGrid(self):
@@ -179,12 +184,12 @@ class Prey(Animal):  # mean number of babies each step
 
 tscale = 1
 prey0, pred0 = 50, 75
-alpha, beta, delta, gamma = 0.5, 0.5, 0.5, 0.7
+alpha, beta, delta, gamma = 0.5, 0.5, 1.5, 0.7
 alpha1, beta1, delta1, gamma1 = alpha / tscale, beta / (pred0 * tscale), delta / (prey0 * tscale), gamma / tscale
-world = World()
-world.SpawnPrey(alpha1, 0.05 / (alpha1 * tscale), 5 * tscale, tscale, prey0, [0, 0])
-world.SpawnPredator(beta1 / (alpha1 + 1), 0.01 / tscale, delta1 / (beta1), beta1 / (delta1 * tscale), 1 / gamma1,
-                    tscale, pred0, [1, 1])
+world = World(2)
+world.randSpawnPrey(alpha1, 0.05 / (alpha1 * tscale), 5 * tscale, tscale, prey0)
+world.randSpawnPredator(beta1 / (alpha1 + 1), 0.01 / tscale, delta1 / (beta1), beta1 / (delta1 * tscale), 1 / gamma1,
+                    tscale, pred0)
 
 
 ##Remeber p = beta/(alpha+1)

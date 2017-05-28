@@ -31,18 +31,15 @@ def culmBinomNew(p, n):
             s += 1
     return s
 
-trials = 2000
-events = 100
-p = 0.5
+def Graph(trials, events, p):
+    old = np.zeros(events)
+    new = np.zeros(events)
 
-old = np.zeros(events)
-new = np.zeros(events)
+    for i in range(trials):
+        #old[culmBinom(n,p)] += 1
+        new[culmBinomNew(p, events)] += 1
 
-for i in range(trials):
-    #old[culmBinom(n,p)] += 1
-    new[culmBinomNew(p, events)] += 1
+    plt.plot(range(events), old)
+    plt.plot(range(events), new)
 
-plt.plot(range(events), old)
-plt.plot(range(events), new)
-
-plt.show()
+    plt.show()
