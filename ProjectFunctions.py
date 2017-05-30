@@ -1,8 +1,9 @@
-import numpy.random as npr
+
 import scipy.misc as scm
-
-
-def culmBinomOld(p, n):
+import numpy as np
+import numpy.random as npr
+import matplotlib.pyplot as plt
+def culmBinom(p, n):
     s = 0
     prob = 1
     rand = npr.uniform() #generates a random number to compare the probability to
@@ -24,17 +25,22 @@ def saveValues(a, b, c, d, prey0, pred0, fdir, text=1):
     if text:
         print("Saved!")
 
-
-def culmBinom(p, n):
-    if n is 0:
-        return 0
+def culmBinomNew(p, n):
     s = 0
-    prob = 1
-    rand = npr.uniform()  # generates a random number to compare the probability to
-    while True:
-        prob -= ((1 - p) ** (n - s)) * (p ** s) * (
-            scm.comb(n, s))  # adjust the parameters of prob to allow for the new number of events
-        if rand > prob:  # see if the randomly generated number lies in the region corresponding to s events
-            return s  # if the randomly generated number lies within the section for this area of prob, retun the number of successes
-        else:
+    for i in range(n):
+        if npr.rand() >= p:
             s += 1
+    return s
+
+def Graph(trials, events, p):
+    old = np.zeros(events)
+    new = np.zeros(events)
+
+    for i in range(trials):
+        #old[culmBinom(n,p)] += 1
+        new[culmBinomNew(p, events)] += 1
+
+    plt.plot(range(events), old)
+    plt.plot(range(events), new)
+
+    plt.show()
