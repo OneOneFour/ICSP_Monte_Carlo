@@ -1,28 +1,19 @@
-import datetime
+import sys
+import time
+from datetime import datetime as dt
 
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random as npr
-import scipy.misc as scm
 
 import ProjectFunctions as pf
+import lotkavolterra as lv
 
-print ("I made it here")
-
-
-def culmBinom(p, n):
-    if n is 0:
-        return 0
-    s = 0
-    prob = 1
-    rand = npr.uniform()  # generates a random number to compare the probability to
-    while True:
-        prob -= ((1 - p) ** (n - s)) * (p ** s) * (scm.comb(n, s))  # adjust the parameters of prob to allow for the new number of events
-        if rand > prob:  # see if the randomly generated number lies in the region corresponding to s events
-            return s  # if the randomly generated number lies within the section for this area of prob, retun the number of successes
-        else:
-            s += 1
-
+sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
+seed = int(time.time())
+npr.seed(seed)
+print("SEED - " + str(seed))
+debug = False
 
 class World:
     gridsize = 2
@@ -38,10 +29,14 @@ class World:
         World.addQueue = {}
 
     def step(self):
+        if debug:
+            print("---------- BEGIN STEP " + str(self.t) + " ----------")
         self.addQueue.clear()
-        self.t += 1
         self.predCounter.append(len(self.population["Predator"]))
         self.preyCounter.append(len(self.population["Prey"]))
+        if debug:
+            print("Prey count:" + str(self.preyCounter[self.t]) + " pred count:" + str(self.predCounter[self.t]))
+        self.t += 1
         for key in self.population:
             for ani in self.population[key]:
                 ani.step(self)
@@ -61,14 +56,14 @@ class World:
 
     def getPrey(self):
         a = [prey for prey in self.population['Prey'] if prey.alive]
-        if 'Prey' in self.addQueue:
-            a.extend([prey for prey in self.addQueue['Prey'] if prey.alive])
         return a
 
     def getPredators(self):
         return self.population['Predator']
 
     def Spawn(self, animal):
+        if debug:
+            print("SPAWN: " + animal.name + "_" + str(animal.id))
         if animal.name not in self.addQueue:
             self.addQueue[animal.name] = []
         self.addQueue[animal.name].append(animal)
@@ -111,7 +106,7 @@ class Animal:
         self.mExpect = meanExpectancey
         self.stdExpect = stdExpectancy
         self.loc = loc[:]
-
+        
     def step(self, world):
         self.age += 1
         if self.age > self.lifeExpect:
@@ -119,6 +114,8 @@ class Animal:
         return
 
     def kill(self):
+        if debug:
+            print("KILL: " + self.name + "_" + str(self.id))
         self.alive = False
 
     def move(self):
@@ -145,33 +142,40 @@ class Predator(Animal):
         self.stdgrow = stdgrow
         self.pkill = npr.normal(mkill, stdkill)
         self.killRange = killRange
+        self.pbirth = npr.normal(mgrow, stdgrow)
+        if debug:
+            print("PREDBIRTH: " + " lifeexpect:" + str(self.lifeExpect) + " killprob:" + str(
+                self.pkill) + " growProb:" + str(self.pbirth)
 
     def step(self, world):
         Animal.step(self, world)
         if not self.alive:
             return
-        self.eat(world.getPrey())  # get the prey
-
+        self.eat(world.getPrey(), world)  # get the prey
+        
     def eat(self, preytot):
         prey = [food for food in preytot if food.loc == self.loc]
         for meal in range(culmBinom(self.pkill, len(prey))):
+
             prey[meal].kill()
-            for baby in range(round(npr.normal(self.mgrow, self.stdgrow))):
+            if npr.uniform() < self.pbirth:
                 world.Spawn(Predator(self.mkill, self.stdkill, self.mgrow, self.stdgrow,
                                      self.mExpect, self.stdExpect, self.name, self.loc))
                 # Spawn Baby next step
 
 
-
 class Prey(Animal):  # mean number of babies each step
     stdgrow = 0
-    mgrow = 0
-
-    def __init__(self, mgrow, stdgrow, mExpect, stdExpect, name, loc):
-        Animal.__init__(self, mExpect, stdExpect, name, loc)
-        self.mgrow = mgrow
+    mgrow = 0  
+    pgrow = 0
+    
+    def __init__(self, mgrow, stdgrow, mExpect, stdExpect, name,loc):
+        Animal.__init__(self, mExpect, stdExpect, name,loc)
         self.mgrow = mgrow
         self.stdgrow = stdgrow
+        self.pgrow = npr.normal(self.mgrow, self.stdgrow)
+        if debug:
+            print("PREYBIRTH:" + "lifeexpect:" + str(self.lifeExpect) + " growProb: " + str(self.pgrow))
 
     def step(self, world):
         if not self.alive:
@@ -180,8 +184,9 @@ class Prey(Animal):  # mean number of babies each step
         Animal.step(self, world)
 
     def rollGrow(self, world):
-        for baby in range(round(npr.normal(self.mgrow, self.stdgrow))):
-            world.Spawn(Prey(self.mgrow, self.stdgrow, self.mExpect, self.stdExpect, self.name, self.loc))
+        roll = npr.uniform()
+        if roll < self.pgrow:
+            world.Spawn(Prey(self.mgrow, self.stdgrow, self.mExpect, self.stdExpect, self.name,self.loc))
 
 
 tscale = 1
@@ -196,17 +201,54 @@ world.randSpawnPredator(beta1 / (alpha1 + 1), 0.01 / tscale, delta1 / (beta1), b
 
 
 ##Remeber p = beta/(alpha+1)
-i = 20 * tscale
+#i = 20 * tscale
 
-for c in range(i):
-    world.step()
-    world.showGrid()
+#for c in range(i):
+#    world.step()
+#    world.showGrid()
 
-plt.plot(np.arange(i), world.preyCounter, 'b-', label="prey")
-plt.plot(np.arange(i), world.predCounter, 'r-', label="predator")
-plt.legend()
-filename = "output/" + (datetime.datetime.now().ctime() + "output").replace(":", "")
+#plt.plot(np.arange(i), world.preyCounter, 'b-', label="prey")
+#plt.plot(np.arange(i), world.predCounter, 'r-', label="predator")
+#plt.legend()
+#filename = "output/" + (datetime.datetime.now().ctime() + "output").replace(":", "")
 #plt.gcf().savefig(filename + ".png")
-plt.show()
+#plt.show()
 #pf.saveValues(alpha, beta, gamma, delta, prey0, pred0, filename + ".csv")
 # Output
+
+def runSim(alpha, beta, gamma, delta, s0, stop=10, steps=10, scale=1):
+    alpha1, beta1, gamma1, delta1 = alpha / steps, beta / (scale * s0[1] * steps), gamma / steps, delta / (
+        scale * s0[0] * steps)
+    world = World()
+    if debug:
+        print("----- START ----")
+        print(
+            "alpha = " + str(alpha1) + " beta = " + str(beta1) + " delta = " + str(delta1) + " gamma = " + str(gamma1))
+    world.SpawnPrey(alpha1, 0.5 / steps, 500 * steps, 1 * steps, int(s0[0] * scale))
+    world.SpawnPredator(beta1 / (alpha1 + 1), 0.01 / steps, delta1 / beta1, 0.1 / steps, 1 / gamma1, 1 * steps,
+                        int(s0[1] * scale))
+    for i in range(stop * steps):
+        world.step()
+    return [world.preyCounter, world.predCounter], np.linspace(0, stop, steps * stop)
+
+
+alpha, beta, gamma, delta, s0 = 0.67, 1.33, 1, 1, [1, 0.75]
+
+(eq, te) = lv.lotkavolterragraph(alpha, beta, gamma, delta, s0, 10, 10)
+(sim, ts) = runSim(alpha, beta, gamma, delta, s0, 10, 10, 100)
+
+fig, axes = plt.subplots(nrows=2, figsize=(20, 10))
+
+axes[0].plot(te, eq[:, 0], linewidth=1, label="prey")
+axes[0].plot(te, eq[:, 1], linewidth=1, label="pred")
+
+axes[1].plot(ts, sim[0], linewidth=1, label="prey")
+axes[1].plot(ts, sim[1], linewidth=1, label="pred")
+
+for ax in range(2):
+    axes[ax].set_xlabel("Time")
+    axes[ax].set_ylabel("Species Count")
+    axes[ax].legend()
+
+plt.show()
+
