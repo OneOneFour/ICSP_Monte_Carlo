@@ -9,7 +9,7 @@ import numpy.random as npr
 import ProjectFunctions as pf
 import lotkavolterra as lv
 
-sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
+#sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
 seed = int(time.time())
 npr.seed(seed)
 print("SEED - " + str(seed))
@@ -106,7 +106,7 @@ class Animal:
         self.mExpect = meanExpectancey
         self.stdExpect = stdExpectancy
         self.loc = loc[:]
-        
+
     def step(self, world):
         self.age += 1
         if self.age > self.lifeExpect:
@@ -145,30 +145,35 @@ class Predator(Animal):
         self.pbirth = npr.normal(mgrow, stdgrow)
         if debug:
             print("PREDBIRTH: " + " lifeexpect:" + str(self.lifeExpect) + " killprob:" + str(
-                self.pkill) + " growProb:" + str(self.pbirth)
+                self.pkill) + " growProb:" + str(self.pbirth))
 
     def step(self, world):
         Animal.step(self, world)
         if not self.alive:
             return
         self.eat(world.getPrey(), world)  # get the prey
-        
-    def eat(self, preytot):
-        prey = [food for food in preytot if food.loc == self.loc]
-        for meal in range(culmBinom(self.pkill, len(prey))):
 
+
+    def eat(self, preytot):
+        min1 = self.loc[1] - self.killRange
+        max1 = self.loc[1] + self.killRange
+        min0 = self.loc[0] - self.killRange
+        max0 = self.loc[0] + self.killRange
+        prey = [food for food in preytot if min1 <= food.loc[1] <= max1 and min0 <= food.loc[0] <= max0]
+        for meal in range(culmBinom(self.pkill, len(prey))):
             prey[meal].kill()
-            if npr.uniform() < self.pbirth:
+            for baby in range(round(npr.normal(self.mgrow, self.stdgrow))):
                 world.Spawn(Predator(self.mkill, self.stdkill, self.mgrow, self.stdgrow,
-                                     self.mExpect, self.stdExpect, self.name, self.loc))
+                                     self.mExpect, self.stdExpect, self.name, self.loc, self.killRange))
                 # Spawn Baby next step
+
 
 
 class Prey(Animal):  # mean number of babies each step
     stdgrow = 0
-    mgrow = 0  
+    mgrow = 0
     pgrow = 0
-    
+
     def __init__(self, mgrow, stdgrow, mExpect, stdExpect, name,loc):
         Animal.__init__(self, mExpect, stdExpect, name,loc)
         self.mgrow = mgrow
@@ -251,4 +256,3 @@ for ax in range(2):
     axes[ax].legend()
 
 plt.show()
-
