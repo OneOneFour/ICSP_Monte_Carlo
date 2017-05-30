@@ -1,8 +1,9 @@
-
-import scipy.misc as scm
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random as npr
-import matplotlib.pyplot as plt
+import scipy.misc as scm
+
+
 def culmBinom(p, n):
     s = 0
     prob = 1
@@ -28,7 +29,7 @@ def saveValues(a, b, c, d, prey0, pred0, fdir, text=1):
 def culmBinomNew(p, n):
     s = 0
     for i in range(n):
-        if npr.rand() >= p:
+        if npr.rand() >= (1 - p):
             s += 1
     return s
 

@@ -9,11 +9,11 @@ import numpy.random as npr
 import ProjectFunctions as pf
 import lotkavolterra as lv
 
-#sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
+sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
 seed = int(time.time())
 npr.seed(seed)
 print("SEED - " + str(seed))
-debug = False
+debug = True
 
 class World:
     gridsize = 2
@@ -49,7 +49,7 @@ class World:
                     self.population[key].remove(ani)
         for key in self.population:
             for beast in self.population[key]:
-                beast.move()
+                beast.move(self)
 
     def getPreyCount(self):
         return len(self.getPrey())
@@ -69,12 +69,12 @@ class World:
         self.addQueue[animal.name].append(animal)
 
     def randSpawnPredator(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, count, killRange):
-        loc = [npr.uniform(self.gridsize), npr.uniform(self.gridsize)]
+        loc = [npr.randint(self.gridsize), npr.randint(self.gridsize)]
         self.population['Predator'] = [Predator(mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, "Predator", loc, killRange) for a in
                                        range(count)]
 
     def randSpawnPrey(self, mgrow, stdgrow, mexpext, stdexpect, count):
-        loc = [npr.uniform(self.gridsize), npr.uniform(self.gridsize)]
+        loc = [npr.randint(self.gridsize), npr.randint(self.gridsize)]
         self.population['Prey'] = [Prey(mgrow, stdgrow, mexpext, stdexpect, "Prey", loc) for a in range(count)]
 
     def showGrid(self):
@@ -118,7 +118,7 @@ class Animal:
             print("KILL: " + self.name + "_" + str(self.id))
         self.alive = False
 
-    def move(self):
+    def move(self, world):
         #if self.move > npr.uniform():
         #self.loc = [(elem+(npr.randint(3)-1))%world.gridsize for elem in loc] TODO sort this out, into one line
         self.loc[1] += (npr.randint(3)-1)
@@ -153,16 +153,15 @@ class Predator(Animal):
             return
         self.eat(world.getPrey(), world)  # get the prey
 
-
-    def eat(self, preytot):
+    def eat(self, preytot, world):
         min1 = self.loc[1] - self.killRange
         max1 = self.loc[1] + self.killRange
         min0 = self.loc[0] - self.killRange
         max0 = self.loc[0] + self.killRange
         prey = [food for food in preytot if min1 <= food.loc[1] <= max1 and min0 <= food.loc[0] <= max0]
-        for meal in range(culmBinom(self.pkill, len(prey))):
+        for meal in range(pf.culmBinomNew(self.pkill, len(prey))):
             prey[meal].kill()
-            for baby in range(round(npr.normal(self.mgrow, self.stdgrow))):
+            if npr.uniform() < self.pbirth:
                 world.Spawn(Predator(self.mkill, self.stdkill, self.mgrow, self.stdgrow,
                                      self.mExpect, self.stdExpect, self.name, self.loc, self.killRange))
                 # Spawn Baby next step
@@ -194,16 +193,17 @@ class Prey(Animal):  # mean number of babies each step
             world.Spawn(Prey(self.mgrow, self.stdgrow, self.mExpect, self.stdExpect, self.name,self.loc))
 
 
+'''
 tscale = 1
 killRange = 1
 prey0, pred0 = 50, 75
-alpha, beta, delta, gamma = 0.5, 0.5, 1.5, 0.7
+alpha, beta, delta, gamma = 0.67,1.33,1,1
 alpha1, beta1, delta1, gamma1 = alpha / tscale, beta / (pred0 * tscale), delta / (prey0 * tscale), gamma / tscale
-world = World(2)
+world = World(10)
 world.randSpawnPrey(alpha1, 0.05 / (alpha1 * tscale), 5 * tscale, tscale, prey0)
 world.randSpawnPredator(beta1 / (alpha1 + 1), 0.01 / tscale, delta1 / (beta1), beta1 / (delta1 * tscale), 1 / gamma1,
                     tscale, pred0, killRange)
-
+'''
 
 ##Remeber p = beta/(alpha+1)
 #i = 20 * tscale
@@ -222,16 +222,10 @@ world.randSpawnPredator(beta1 / (alpha1 + 1), 0.01 / tscale, delta1 / (beta1), b
 # Output
 
 def runSim(alpha, beta, gamma, delta, s0, stop=10, steps=10, scale=1):
-    alpha1, beta1, gamma1, delta1 = alpha / steps, beta / (scale * s0[1] * steps), gamma / steps, delta / (
-        scale * s0[0] * steps)
-    world = World()
-    if debug:
-        print("----- START ----")
-        print(
-            "alpha = " + str(alpha1) + " beta = " + str(beta1) + " delta = " + str(delta1) + " gamma = " + str(gamma1))
-    world.SpawnPrey(alpha1, 0.5 / steps, 500 * steps, 1 * steps, int(s0[0] * scale))
-    world.SpawnPredator(beta1 / (alpha1 + 1), 0.01 / steps, delta1 / beta1, 0.1 / steps, 1 / gamma1, 1 * steps,
-                        int(s0[1] * scale))
+    world = World(25)
+    world.randSpawnPrey(alpha / (steps), 0.1 / (steps), 50 * steps, 1 * steps, int(s0[0] * scale))
+    world.randSpawnPredator(world.gridsize * beta / (steps * scale), (0.1 / (steps * scale)), delta / (beta),
+                            0.1 / scale, steps / gamma, 1.0 * steps, int(s0[1] * scale), 2)
     for i in range(stop * steps):
         world.step()
     return [world.preyCounter, world.predCounter], np.linspace(0, stop, steps * stop)
