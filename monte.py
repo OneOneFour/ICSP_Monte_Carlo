@@ -9,7 +9,7 @@ import numpy.random as npr
 import ProjectFunctions as pf
 import lotkavolterra as lv
 
-sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
+#sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
 seed = int(time.time())
 npr.seed(seed)
 print("SEED - " + str(seed))
@@ -69,13 +69,11 @@ class World:
         self.addQueue[animal.name].append(animal)
 
     def randSpawnPredator(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, count, killRange):
-        loc = [npr.randint(self.gridsize), npr.randint(self.gridsize)]
-        self.population['Predator'] = [Predator(mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, "Predator", loc, killRange) for a in
+        self.population['Predator'] = [Predator(mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, "Predator", [npr.randint(self.gridsize), npr.randint(self.gridsize)], killRange) for a in
                                        range(count)]
 
     def randSpawnPrey(self, mgrow, stdgrow, mexpext, stdexpect, count):
-        loc = [npr.randint(self.gridsize), npr.randint(self.gridsize)]
-        self.population['Prey'] = [Prey(mgrow, stdgrow, mexpext, stdexpect, "Prey", loc) for a in range(count)]
+        self.population['Prey'] = [Prey(mgrow, stdgrow, mexpext, stdexpect, "Prey", [npr.randint(self.gridsize), npr.randint(self.gridsize)]) for a in range(count)]
 
     def showGrid(self):
         for key in self.population:
