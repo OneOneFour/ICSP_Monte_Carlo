@@ -191,6 +191,32 @@ class Prey(Animal):  # mean number of babies each step
             world.Spawn(Prey(self.mgrow, self.stdgrow, self.mExpect, self.stdExpect, self.name,self.loc))
 
 
+class Disease:  # mean number of babies each step
+    pspread = 0
+    pdeath0 = 0
+    ill = []
+
+    def __init__(pspread, pdeath0, loc=None):
+        if loc!=None
+            for beast in world.population:
+                if beast.loc == loc:
+                    if npr.rand() < pspread:
+                        ill.append(beast)
+        self.pspread = pspread
+        self.pdeath0 = pdeath0
+
+    def step(self):
+        for infected in self.ill:
+            for other in world.population:
+                if other.loc == infected.loc:
+                    if npr.rand() < self.pspread
+                        #effects of infection TODO
+                        pass
+
+    def updateIll(self):
+        ill  = [elem in ill if elem.alive == True]
+
+
 '''
 tscale = 1
 killRange = 1
@@ -231,8 +257,8 @@ def runSim(alpha, beta, gamma, delta, s0, stop=10, steps=10, scale=1):
 
 alpha, beta, gamma, delta, s0 = 0.67, 1.33, 1, 1, [1, 0.75]
 
-(eq, te) = lv.lotkavolterragraph(alpha, beta, gamma, delta, s0, 10, 10)
-(sim, ts) = runSim(alpha, beta, gamma, delta, s0, 10, 10, 100)
+(eq, te) = lv.lotkavolterragraph(alpha, beta, gamma, delta, s0, 20, 10)
+(sim, ts) = runSim(alpha, beta, gamma, delta, s0, 20, 10, 100)
 
 fig, axes = plt.subplots(nrows=2, figsize=(20, 10))
 
