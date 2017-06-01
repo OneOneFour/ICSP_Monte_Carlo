@@ -24,9 +24,10 @@ class World:
     t = 0
 
     def __init__(self, gridsize):
-        self.gridsize = gridsize
+        World.gridsize = gridsize
         World.population = {}
         World.addQueue = {}
+        World.pos = np.empty((gridsize,gridsize), dtype=object)
 
     def step(self):
         if debug:
@@ -69,11 +70,40 @@ class World:
         self.addQueue[animal.name].append(animal)
 
     def randSpawnPredator(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, count, killRange):
-        self.population['Predator'] = [Predator(mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, "Predator", [npr.randint(self.gridsize), npr.randint(self.gridsize)], killRange) for a in
-                                       range(count)]
+        for a in range(count):
+            x = npr.randint(self.gridsize)
+            y = npr.randint(self.gridsize)
+            s = 0
+            while (self.world[x][y] is not None):
+                x += 1
+                x %= World.gridsize
+                s += 1
+                if s == (world.gridsize - 1):
+                    y += 1
+                    y %= World.gridsize
+                    s = 0
+
+            World.world[x][y] = Predator(mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, "Predator", [x, y], killRange)
+
+            World.population['Predator'].append(World.world[x][y])
 
     def randSpawnPrey(self, mgrow, stdgrow, mexpext, stdexpect, count):
-        self.population['Prey'] = [Prey(mgrow, stdgrow, mexpext, stdexpect, "Prey", [npr.randint(self.gridsize), npr.randint(self.gridsize)]) for a in range(count)]
+        for a in range(count):
+            x = npr.randint(self.gridsize)
+            y = npr.randint(self.gridsize)
+            s = 0
+            while (self.world[x][y] is not None):
+                x += 1
+                x %= World.gridsize
+                s += 1
+                if s == (world.gridsize - 1):
+                    y += 1
+                    y %= World.gridsize
+                    s = 0
+
+            World.world[x][y] = Prey(mgrow, stdgrow, mexpext, stdexpect, "Prey", [x, y])
+
+            World.population['Prey'].append(World.world[x][y])
 
     def showGrid(self):
         for key in self.population:
@@ -104,6 +134,7 @@ class Animal:
         self.mExpect = meanExpectancey
         self.stdExpect = stdExpectancy
         self.loc = loc[:]
+        World.world[loc[0]][loc[1]] = self
 
     def step(self, world):
         self.age += 1
@@ -119,10 +150,22 @@ class Animal:
     def move(self, world):
         #if self.move > npr.uniform():
         #self.loc = [(elem+(npr.randint(3)-1))%world.gridsize for elem in loc] TODO sort this out, into one line
-        self.loc[1] += (npr.randint(3)-1)
-        self.loc[1] %= world.gridsize
-        self.loc[0] += (npr.randint(3)-1)
-        self.loc[0] %= world.gridsize
+        #self.loc[1] += (npr.randint(3)-1)
+        #self.loc[1] %= world.gridsize
+        #self.loc[0] += (npr.randint(3)-1)
+        #self.loc[0] %= world.gridsize
+        either = [-1, 1]
+        dest = []
+        for x in either:
+            for y in either:
+                if World.world[self.loc[0] + x][self.loc[1] + y] is None
+                    dest.append((x, y))
+        dest.append((0,0))
+
+        chosen = npr.randint(len(dest))
+        World.world[self.loc[0] + dest[chosen][0]][self.loc[1] + dest[chosen][1]] = self
+        World.world[self.loc[0]][self.loc[1]] = None
+
 
 class Predator(Animal):
     pkill = 0
@@ -152,17 +195,19 @@ class Predator(Animal):
         self.eat(world.getPrey(), world)  # get the prey
 
     def eat(self, preytot, world):
-        min1 = self.loc[1] - self.killRange
-        max1 = self.loc[1] + self.killRange
-        min0 = self.loc[0] - self.killRange
-        max0 = self.loc[0] + self.killRange
-        prey = [food for food in preytot if min1 <= food.loc[1] <= max1 and min0 <= food.loc[0] <= max0]
-        for meal in range(pf.culmBinomNew(self.pkill, len(prey))):
-            prey[meal].kill()
-            if npr.uniform() < self.pbirth:
-                world.Spawn(Predator(self.mkill, self.stdkill, self.mgrow, self.stdgrow,
-                                     self.mExpect, self.stdExpect, self.name, self.loc, self.killRange))
-                # Spawn Baby next step
+        prey = []
+        for x in arange(-killRange, killRange+1):
+            for y in arange(-killRange, killRange+1):
+                if World.world[self.loc[0]+x][self.loc[1]+y] is not None:
+                    prey.append(World.world[self.loc[0]+x][self.loc[1]+y])
+
+        for meal in prey:
+            if pkill > npr.uniform():
+                meal.kill()
+                if npr.uniform() < self.pbirth:
+                    world.Spawn(Predator(self.mkill, self.stdkill, self.mgrow, self.stdgrow,
+                                         self.mExpect, self.stdExpect, self.name, self.loc, self.killRange))
+                    # Spawn Baby next step
 
 
 
