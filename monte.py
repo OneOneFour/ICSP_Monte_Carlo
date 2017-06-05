@@ -2,14 +2,13 @@ import sys
 import time
 from datetime import datetime as dt
 
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random as npr
 
 import ProjectFunctions as pf
 import lotkavolterra as lv
 
-#sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
+sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
 seed = int(time.time())
 npr.seed(seed)
 print("SEED - " + str(seed))
@@ -19,92 +18,101 @@ class World:
     gridsize = 2
     predCounter = []
     preyCounter = []
-    population = None
     addQueue = None
-    t = 0
-
+    t = 1
     def __init__(self, gridsize):
-        World.gridsize = gridsize
-        World.population = {}
-        World.addQueue = {}
-        World.pos = np.empty((gridsize,gridsize), dtype=object)
+        self.gridsize = gridsize
+        self.addQueue = []
+        self.pos = np.empty((gridsize, gridsize), dtype=Animal)
 
     def step(self):
         if debug:
             print("---------- BEGIN STEP " + str(self.t) + " ----------")
         self.addQueue.clear()
-        self.predCounter.append(len(self.population["Predator"]))
-        self.preyCounter.append(len(self.population["Prey"]))
         if debug:
-            print("Prey count:" + str(self.preyCounter[self.t]) + " pred count:" + str(self.predCounter[self.t]))
+            print(
+                "Prey count:" + str(self.preyCounter[self.t - 1]) + " Pred count:" + str(self.predCounter[self.t - 1]))
+        animals = self.get_objects(Animal)
+        for ani in animals:
+            ani.step(self)
+        for item in self.addQueue:
+            self.birth(item[0], item[1])
+        for ani in animals:
+            if not ani.alive:
+                self.pos[ani.loc[0]][ani.loc[1]] = None  # Hasta la vista
         self.t += 1
-        for key in self.population:
-            for ani in self.population[key]:
-                ani.step(self)
-        # cull the old
-        for key in self.population:
-            if key in self.addQueue:
-                self.population[key].extend(self.addQueue[key])
-            for ani in self.population[key][:]:
-                if not ani.alive:
-                    self.population[key].remove(ani)
-        for key in self.population:
-            for beast in self.population[key]:
-                beast.move(self)
+        self.preyCounter.append(len(self.get_objects(Prey)))
+        self.predCounter.append(len(self.get_objects(Predator)))
 
-    def getPreyCount(self):
-        return len(self.getPrey())
-
-    def getPrey(self):
-        a = [prey for prey in self.population['Prey'] if prey.alive]
-        return a
-
-    def getPredators(self):
-        return self.population['Predator']
-
-    def Spawn(self, animal):
+    def Spawn(self, animal, ploc):
         if debug:
-            print("SPAWN: " + animal.name + "_" + str(animal.id))
-        if animal.name not in self.addQueue:
-            self.addQueue[animal.name] = []
-        self.addQueue[animal.name].append(animal)
+            print("SPAWN: " + animal.name + "_" + str(animal.id) + " ppos: " + str(ploc))
+        self.addQueue.append((animal, ploc))
+
+    def get_objects(self, object):
+        objectArray = []
+        for x in range(len(self.pos)):
+            for y in range(len(self.pos[x])):
+                if self.pos[x][y] is None:
+                    continue
+                if isinstance(self.pos[x][y], object):
+                    body = self.pos[x][y]
+                    objectArray.append(body)
+        return objectArray
+
+    def birth(self, animal, ploc):
+        either = [-1, 0, 1]
+        dest = []
+        for x in either:
+            for y in either:
+                if self.pos[(ploc[0] + x) % self.gridsize][(ploc[1] + y) % self.gridsize] is None:
+                    dest.append((x, y))
+        if len(dest) == 0:
+            return None
+        chosen = npr.randint(len(dest))
+        loc = [(ploc[0] + dest[chosen][0]) % self.gridsize, (ploc[1] + dest[chosen][1]) % self.gridsize]
+        animal.loc = loc[:]
+        self.pos[loc[0]][loc[1]] = animal
 
     def randSpawnPredator(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, count, killRange):
+        self.predCounter.append(count)
         for a in range(count):
             x = npr.randint(self.gridsize)
             y = npr.randint(self.gridsize)
             s = 0
-            while (self.world[x][y] is not None):
+            while self.pos[x][y] is not None:
                 x += 1
-                x %= World.gridsize
+                x %= self.gridsize
                 s += 1
-                if s == (world.gridsize - 1):
+                if s == (self.gridsize - 1):
                     y += 1
-                    y %= World.gridsize
+                    y %= self.gridsize
                     s = 0
 
-            World.world[x][y] = Predator(mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, "Predator", [x, y], killRange)
+            self.pos[x][y] = Predator(mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, "Predator", killRange)
+            self.pos[x][y].loc = [x, y]
 
-            World.population['Predator'].append(World.world[x][y])
+
 
     def randSpawnPrey(self, mgrow, stdgrow, mexpext, stdexpect, count):
+        self.preyCounter.append(count)
         for a in range(count):
             x = npr.randint(self.gridsize)
             y = npr.randint(self.gridsize)
             s = 0
-            while (self.world[x][y] is not None):
+            while self.pos[x][y] is not None:
                 x += 1
-                x %= World.gridsize
+                x %= self.gridsize
                 s += 1
-                if s == (world.gridsize - 1):
+                if s == (self.gridsize - 1):
                     y += 1
-                    y %= World.gridsize
+                    y %= self.gridsize
                     s = 0
 
-            World.world[x][y] = Prey(mgrow, stdgrow, mexpext, stdexpect, "Prey", [x, y])
+            self.pos[x][y] = Prey(mgrow, stdgrow, mexpext, stdexpect, "Prey")
+            self.pos[x][y].loc = [x, y]
 
-            World.population['Prey'].append(World.world[x][y])
-
+    '''
     def showGrid(self):
         for key in self.population:
             print(key)
@@ -113,7 +121,7 @@ class World:
                 gridArray[beast.loc[0]][beast.loc[1]] += 1
             print (gridArray)
 
-
+    '''
 class Animal:
     id = 0
     count = 0
@@ -126,26 +134,28 @@ class Animal:
     loc = []
     #pmove = 0
 
-    def __init__(self, meanExpectancey, stdExpectancy, name, loc):
+    def __init__(self, meanExpectancey, stdExpectancy, name):
         self.id = Animal.count
         Animal.count += 1
         self.lifeExpect = round(npr.normal(meanExpectancey, stdExpectancy))
         self.name = name
         self.mExpect = meanExpectancey
         self.stdExpect = stdExpectancy
-        self.loc = loc[:]
-        World.world[loc[0]][loc[1]] = self
 
     def step(self, world):
         self.age += 1
         if self.age > self.lifeExpect:
             self.kill()
-        return
+            return
+        if self.alive:
+            self.move(world)
 
     def kill(self):
         if debug:
-            print("KILL: " + self.name + "_" + str(self.id))
+            print(
+                "KILL: " + self.name + "_" + str(self.id) + " age:" + str(self.age) + " lexpect:" + str(self.lifeExpect))
         self.alive = False
+
 
     def move(self, world):
         #if self.move > npr.uniform():
@@ -154,17 +164,19 @@ class Animal:
         #self.loc[1] %= world.gridsize
         #self.loc[0] += (npr.randint(3)-1)
         #self.loc[0] %= world.gridsize
-        either = [-1, 1]
-        dest = []
+        either = [-1, 0, 1]
+        dest = [(0, 0)]
         for x in either:
             for y in either:
-                if World.world[self.loc[0] + x][self.loc[1] + y] is None
+                if world.pos[(self.loc[0] + x) % world.gridsize][(self.loc[1] + y) % world.gridsize] is None:
                     dest.append((x, y))
-        dest.append((0,0))
-
         chosen = npr.randint(len(dest))
-        World.world[self.loc[0] + dest[chosen][0]][self.loc[1] + dest[chosen][1]] = self
-        World.world[self.loc[0]][self.loc[1]] = None
+        world.pos[(self.loc[0] + dest[chosen][0]) % world.gridsize][
+            (self.loc[1] + dest[chosen][1]) % world.gridsize] = self
+        if dest[chosen][0] != 0 or dest[chosen][1] != 0:
+            world.pos[self.loc[0]][self.loc[1]] = None
+        self.loc = [(self.loc[0] + dest[chosen][0]) % world.gridsize, (self.loc[1] + dest[chosen][1]) % world.gridsize]
+
 
 
 class Predator(Animal):
@@ -175,8 +187,8 @@ class Predator(Animal):
     stdgrow = 0
     killRange = 0
 
-    def __init__(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, name, loc, killRange):
-        Animal.__init__(self, mexpect, stdexpect, name, loc)
+    def __init__(self, mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, name, killRange):
+        Animal.__init__(self, mexpect, stdexpect, name)
         self.mkill = mkill
         self.stdkill = stdkill
         self.mgrow = mgrow
@@ -192,21 +204,21 @@ class Predator(Animal):
         Animal.step(self, world)
         if not self.alive:
             return
-        self.eat(world.getPrey(), world)  # get the prey
+        self.eat(world.get_objects(Prey), world)  # get the prey
 
     def eat(self, preytot, world):
         prey = []
-        for x in arange(-killRange, killRange+1):
-            for y in arange(-killRange, killRange+1):
-                if World.world[self.loc[0]+x][self.loc[1]+y] is not None:
-                    prey.append(World.world[self.loc[0]+x][self.loc[1]+y])
+        for x in np.arange(-self.killRange, self.killRange + 1):
+            for y in np.arange(-self.killRange, self.killRange + 1):
+                if isinstance(world.pos[(self.loc[0] + x) % world.gridsize][(self.loc[1] + y) % world.gridsize], Prey):
+                    prey.append(world.pos[(self.loc[0] + x) % world.gridsize][(self.loc[1] + y) % world.gridsize])
 
         for meal in prey:
-            if pkill > npr.uniform():
+            if self.pkill > npr.uniform():
                 meal.kill()
                 if npr.uniform() < self.pbirth:
                     world.Spawn(Predator(self.mkill, self.stdkill, self.mgrow, self.stdgrow,
-                                         self.mExpect, self.stdExpect, self.name, self.loc, self.killRange))
+                                         self.mExpect, self.stdExpect, self.name, self.killRange), self.loc)
                     # Spawn Baby next step
 
 
@@ -216,13 +228,14 @@ class Prey(Animal):  # mean number of babies each step
     mgrow = 0
     pgrow = 0
 
-    def __init__(self, mgrow, stdgrow, mExpect, stdExpect, name,loc):
-        Animal.__init__(self, mExpect, stdExpect, name,loc)
+    def __init__(self, mgrow, stdgrow, mExpect, stdExpect, name):
+        Animal.__init__(self, mExpect, stdExpect, name)
         self.mgrow = mgrow
         self.stdgrow = stdgrow
         self.pgrow = npr.normal(self.mgrow, self.stdgrow)
         if debug:
             print("PREYBIRTH:" + "lifeexpect:" + str(self.lifeExpect) + " growProb: " + str(self.pgrow))
+
 
     def step(self, world):
         if not self.alive:
@@ -233,15 +246,16 @@ class Prey(Animal):  # mean number of babies each step
     def rollGrow(self, world):
         roll = npr.uniform()
         if roll < self.pgrow:
-            world.Spawn(Prey(self.mgrow, self.stdgrow, self.mExpect, self.stdExpect, self.name,self.loc))
+            world.Spawn(Prey(self.mgrow, self.stdgrow, self.mExpect, self.stdExpect, self.name), self.loc)
 
 
+'''
 class Disease:  # mean number of babies each step
     pspread = 0
     pdeath0 = 0
     ill = []
 
-    def __init__(pspread, pdeath0, loc=None):
+    def __init__(self,pspread, pdeath0, loc=None):
         if loc!=None
             for beast in world.population:
                 if beast.loc == loc:
@@ -254,15 +268,15 @@ class Disease:  # mean number of babies each step
         for infected in self.ill:
             for other in world.population:
                 if other.loc == infected.loc:
-                    if npr.rand() < self.pspread
+                    if npr.rand() < self.pspread:
                         #effects of infection TODO
                         pass
 
     def updateIll(self):
-        ill  = [elem in ill if elem.alive == True]
+        self.ill  = [elem for elem in self.ill if elem.alive == True]
 
 
-'''
+
 tscale = 1
 killRange = 1
 prey0, pred0 = 50, 75
@@ -289,7 +303,7 @@ world.randSpawnPredator(beta1 / (alpha1 + 1), 0.01 / tscale, delta1 / (beta1), b
 #plt.show()
 #pf.saveValues(alpha, beta, gamma, delta, prey0, pred0, filename + ".csv")
 # Output
-
+'''
 def runSim(alpha, beta, gamma, delta, s0, stop=10, steps=10, scale=1):
     world = World(25)
     world.randSpawnPrey(alpha / (steps), 0.1 / (steps), 50 * steps, 1 * steps, int(s0[0] * scale))
@@ -319,3 +333,4 @@ for ax in range(2):
     axes[ax].legend()
 
 plt.show()
+'''
