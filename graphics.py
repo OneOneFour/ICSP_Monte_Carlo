@@ -23,7 +23,8 @@ class Window():
         pygame.init()
         screen = pygame.display.set_mode((self.width, self.height))
         font = pygame.font.Font(None, 25)
-        self.add_to_stack(WorldScreen(25, self, 0.67, 1.33, 1, 1, [1, 1.5], 5, 1))
+        self.add_to_stack(WorldScreen(25, self, 10, 0.6, 1.3, 1, [5.25, 1], 101, 1))
+        #(self, size, window, alpha, beta, delta, gamma, s0, scale=1, steps=1):
         while self.isRunning:
             deltaTime = pygame.time.Clock().tick(60) / 1000
             for event in pygame.event.get():
@@ -72,18 +73,26 @@ class Screen(ABC):
 
 class WorldScreen(Screen):
     border = 2.5
-    stepTime = 0.25
+    stepTime = 0
 
     def __init__(self, size, window, alpha, beta, delta, gamma, s0, scale=1, steps=1):
         self.window = window
         self.__world = monte.World(size)
         self.timeToStep = self.stepTime
         self.steps = steps
+        preypop = s0[0] * scale
+        predpop = s0[1] * scale
+        if size**2 < (predpop + preypop):
+            print ("Populations reduced as grid not large enough.")
+            excess = predpop + preypop - size**2
+            preypop -= np.ceil((s0[0]/(s0[0]+s0[1]))*excess)
+            predpop -= np.ceil((s0[1]/(s0[0]+s0[1]))*excess)
+            print ("Populations reduced to Prey =", preypop, "Predators =", predpop)
         self.__world.randSpawnPrey(alpha / (self.__world.gridsize * steps), 0.1 / steps, 50 * steps, 1 * steps,
-                                   int(s0[0] * scale))  # Input data here
+                                   int(preypop))  # Input data here
         self.__world.randSpawnPredator((self.__world.gridsize * beta) / (steps * scale), 0.1 / (steps * scale),
                                        delta / beta, 0.1 / scale, steps / gamma, steps,
-                                       int(s0[1] * scale), 3)
+                                       int(predpop), 3)
         self.grphdata = self.get_pop_graph()
 
     def input(self, event):
