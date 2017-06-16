@@ -1,10 +1,12 @@
 import matplotlib
 
 matplotlib.use("Agg")
+
 import pygame
 import monte
 import numpy as np
 from abc import ABC, abstractmethod
+from datetime import datetime as dt
 import matplotlib.backends.backend_agg as agg
 import matplotlib.pyplot as plt
 
@@ -72,7 +74,7 @@ class Screen(ABC):
 
 
 class WorldScreen(Screen):
-    border = 2.5
+    border = 1
     stepTime = 0
 
     def __init__(self, size, window, alpha, beta, delta, gamma, s0, scale=1, steps=1):
@@ -97,6 +99,8 @@ class WorldScreen(Screen):
 
     def input(self, event):
         Screen.input(self, event)
+        if event.type == pygame.QUIT:
+            self.grphdata[2].savefig("output/" + dt.now().ctime().replace(":", " ") + "output.png")
         if event == pygame.K_SPACE:
             self.__world.step()
             self.grphdata = self.get_pop_graph()

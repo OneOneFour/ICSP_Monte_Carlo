@@ -5,10 +5,7 @@ from datetime import datetime as dt
 import numpy as np
 import numpy.random as npr
 
-import ProjectFunctions as pf
-import lotkavolterra as lv
-
-sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
+sys.stdout = open("output/" + dt.now().ctime().replace(":", " ") + "output.txt", 'w')
 seed = int(time.time())
 npr.seed(seed)
 print("SEED - " + str(seed))
