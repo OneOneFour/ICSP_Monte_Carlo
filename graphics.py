@@ -3,6 +3,8 @@ import matplotlib
 matplotlib.use("Agg")
 
 import pygame
+import sgc
+from sgc.locals import *
 import monte
 import numpy as np
 from abc import ABC, abstractmethod
@@ -23,21 +25,20 @@ class Window():
 
     def __init__(self):
         pygame.init()
-        screen = pygame.display.set_mode((self.width, self.height))
+        screen = sgc.surface.Screen((self.width, self.height))
         font = pygame.font.Font(None, 25)
-        self.add_to_stack(WorldScreen(25, self, 10, 0.6, 1.3, 1, [5.25, 1], 101, 1))
+        self.add_to_stack(MenuScreen(self))
         #(self, size, window, alpha, beta, delta, gamma, s0, scale=1, steps=1):
         while self.isRunning:
-            deltaTime = pygame.time.Clock().tick(60) / 1000
+            deltaTime = pygame.time.Clock().tick(60)
             for event in pygame.event.get():
                 self.get_top_screen().input(event)
             screen.fill(BLACK)
             self.get_top_screen().update(deltaTime)
-            self.get_top_screen().draw(deltaTime, screen)
+            self.get_top_screen().draw(deltaTime, pygame.display.get_surface())
             pygame.display.flip()
 
     def add_to_stack(self, screen):
-
         self.screens.append(screen)
 
     def delete_top_stack(self):
@@ -73,11 +74,73 @@ class Screen(ABC):
         pass
 
 
+class MenuScreen(Screen):
+    lastScaleVal = 10
+
+    def __init__(self, window):
+        self.window = window
+        width = 35
+        self.runButton = sgc.Button(label="Run", pos=(self.window.width / 2, self.window.height - 60))
+        self.sizeScale = sgc.Scale(label="Size of the world grid", min=10, max=30, min_step=1, max_step=5, pos=(25, 25))
+        self.mGrowSlider = sgc.Scale(label="Prey growth probability", min=0, max=100, min_step=1, max_step=10,
+                                     pos=(25, 25 + width * 1))
+        self.mLifeSlider = sgc.Scale(label="Prey mean life expectancy", min=1, max=20, min_step=0.5, max_step=2,
+                                     pos=(25, 25 + width * 2))
+        self.mKillSlider = sgc.Scale(label="Predator kill probability", min=0, max=100, min_step=1, max_step=10,
+                                     pos=(25, 25 + width * 3))
+        self.mEatSlider = sgc.Scale(label="Predator eat given kill probability", min=0, max=100, min_step=1,
+                                    max_step=10, pos=(25, 25 + width * 4))
+        self.predLifeSlider = sgc.Scale(label="Predator mean life expectancy", min=1, max=20, min_step=0.5, max_step=2,
+                                        pos=(25, 25 + width * 5))
+        self.killRangeSlider = sgc.Scale(label="Predator kill range slider", min=1, max=5, min_step=1, max_step=1,
+                                         pos=(25, 25 + width * 6))
+        self.initprey = sgc.Scale(label="Initial prey population", min=0, max=10 ** 2, min_step=1, max_step=10,
+                                  pos=(25, 25 + width * 7))
+        self.initpred = sgc.Scale(label="Initial predator population", min=0, max=10 ** 2, min_step=1, max_step=10,
+                                  pos=(25, 25 + width * 8))
+
+        self.runButton.add(0)
+        self.sizeScale.add(1)
+        self.mGrowSlider.add(2)
+        self.mLifeSlider.add(3)
+        self.mKillSlider.add(4)
+        self.mEatSlider.add(5)
+        self.predLifeSlider.add(6)
+        self.killRangeSlider.add(7)
+        self.initprey.add(8)
+        self.initpred.add(9)
+
+    def input(self, event):
+        sgc.event(event)
+        if self.sizeScale.value != self.lastScaleVal:
+            self.initpred.config(max=self.sizeScale.value ** 2)
+            self.initprey.config(max=self.sizeScale.value ** 2)
+
+        if event.type == GUI:
+            if event.gui_type == "click" and event.widget is self.runButton:
+                if self.initprey.value + self.initpred.value > self.sizeScale.value ** 2:
+                    print("Population too large for configuration, please select smaller values of predators and prey.")
+                else:
+                    self.window.add_to_stack(
+                        WorldScreen(self.sizeScale.value, self.window, self.mGrowSlider.value / 100,
+                                    self.mLifeSlider.value, self.mKillSlider.value / 100, self.mEatSlider.value / 100,
+                                    self.predLifeSlider.value, self.killRangeSlider.value,
+                                    [self.initprey.value, self.initpred.value]))
+
+    def draw(self, delta, screen):
+        pass
+
+    def update(self, delta):
+        sgc.update(delta * 1000)
+        self.lastScaleVal = self.sizeScale.value
+
+
 class WorldScreen(Screen):
     border = 1
     stepTime = 0
 
-    def __init__(self, size, window, alpha, beta, delta, gamma, s0, scale=1, steps=1):
+    def __init__(self, size, window, prey_grow, prey_life, pred_catch, pred_eat, pred_life, pred_kill_range, s0,
+                 scale=1, steps=1):
         self.window = window
         self.__world = monte.World(size)
         self.timeToStep = self.stepTime
@@ -90,20 +153,18 @@ class WorldScreen(Screen):
             preypop -= np.ceil((s0[0]/(s0[0]+s0[1]))*excess)
             predpop -= np.ceil((s0[1]/(s0[0]+s0[1]))*excess)
             print ("Populations reduced to Prey =", preypop, "Predators =", predpop)
-        self.__world.randSpawnPrey(alpha / (self.__world.gridsize * steps), 0.1 / steps, 50 * steps, 1 * steps,
-                                   int(preypop))  # Input data here
-        self.__world.randSpawnPredator((self.__world.gridsize * beta) / (steps * scale), 0.1 / (steps * scale),
-                                       delta / beta, 0.1 / scale, steps / gamma, steps,
-                                       int(predpop), 3)
+        self.__world.randSpawnPrey(prey_grow, 0.2, prey_life, 1.5, s0[0])  # Input data here
+        self.__world.randSpawnPredator(pred_catch, 0.2, pred_eat, 0.2, pred_life, 1.5, s0[1], pred_kill_range)
         self.grphdata = self.get_pop_graph()
 
     def input(self, event):
         Screen.input(self, event)
         if event.type == pygame.QUIT:
             self.grphdata[2].savefig("output/" + dt.now().ctime().replace(":", " ") + "output.png")
-        if event == pygame.K_SPACE:
-            self.__world.step()
-            self.grphdata = self.get_pop_graph()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                self.grphdata[2].savefig("output/" + dt.now().ctime().replace(":", " ") + "output.png")
+                self.window.pop_stack()
 
     def draw(self, delta, screen):
         width = self.window.height / self.__world.gridsize
@@ -134,6 +195,7 @@ class WorldScreen(Screen):
 
     def update(self, delta):
         self.timeToStep -= delta
+
         if self.timeToStep <= 0:
             self.__world.step()
             self.timeToStep = self.stepTime
