@@ -8,11 +8,11 @@ import numpy.random as npr
 import ProjectFunctions as pf
 import lotkavolterra as lv
 
-sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
+#sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
 seed = int(time.time())
 npr.seed(seed)
 print("SEED - " + str(seed))
-debug = True
+debug = False
 
 class World:
     gridsize = 2
@@ -92,8 +92,6 @@ class World:
             self.pos[x][y] = Predator(mkill, stdkill, mgrow, stdgrow, mexpect, stdexpect, "Predator", killRange)
             self.pos[x][y].loc = [x, y]
 
-
-
     def randSpawnPrey(self, mgrow, stdgrow, mexpext, stdexpect, count):
         self.preyCounter.append(count)
         for a in range(count):
@@ -111,6 +109,11 @@ class World:
 
             self.pos[x][y] = Prey(mgrow, stdgrow, mexpext, stdexpect, "Prey")
             self.pos[x][y].loc = [x, y]
+
+    def cap_recap(self, animals, location, size, time):
+        for beast in animals:
+            if loc[0] - size <= beast.loc[0] <= loc[0] + size and  loc[1] - size <= beast.loc[1] <= loc[1] + size:
+                beast.tags.extend(time)
 
     '''
     def showGrid(self):
@@ -133,6 +136,7 @@ class Animal:
     age = 0
     loc = []
     #pmove = 0
+    tags =[]
 
     def __init__(self, meanExpectancey, stdExpectancy, name):
         self.id = Animal.count
@@ -154,6 +158,7 @@ class Animal:
         if debug:
             print(
                 "KILL: " + self.name + "_" + str(self.id) + " age:" + str(self.age) + " lexpect:" + str(self.lifeExpect))
+        print (self.name + self.tags)
         self.alive = False
 
 

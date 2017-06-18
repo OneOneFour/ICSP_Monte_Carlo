@@ -1,12 +1,12 @@
 import matplotlib
-
-matplotlib.use("Agg")
 import pygame
 import monte
 import numpy as np
 from abc import ABC, abstractmethod
 import matplotlib.backends.backend_agg as agg
 import matplotlib.pyplot as plt
+
+matplotlib.use("Agg")
 
 BLACK = (0,0,0)
 WHITE = (255, 255, 255)
@@ -23,7 +23,7 @@ class Window():
         pygame.init()
         screen = pygame.display.set_mode((self.width, self.height))
         font = pygame.font.Font(None, 25)
-        self.add_to_stack(WorldScreen(25, self, 10, 0.6, 1.3, 1, [5.25, 1], 101, 1))
+        self.add_to_stack(WorldScreen(25, self, 10, 0.6, 1.7, 1, [5.25, 1], 100, 1))
         #(self, size, window, alpha, beta, delta, gamma, s0, scale=1, steps=1):
         while self.isRunning:
             deltaTime = pygame.time.Clock().tick(60) / 1000
