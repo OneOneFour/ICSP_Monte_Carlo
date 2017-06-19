@@ -16,13 +16,13 @@ debug = False
 
 class World:
     gridsize = 2
-    predCounter = []
-    preyCounter = []
     addQueue = None
     t = 1
     def __init__(self, gridsize):
         self.gridsize = gridsize
         self.addQueue = []
+        self.preyCounter = []
+        self.predCounter = []
         self.pos = np.empty((gridsize, gridsize), dtype=Animal)
 
     def step(self):
@@ -135,6 +135,8 @@ class Animal:
     lifeExpect = 0  # Mean age of death #std dev is 1.5 steps?
     age = 0
     loc = []
+    caughtDiseases = []
+    immunities = []
     #pmove = 0
     tags =[]
 
@@ -159,6 +161,7 @@ class Animal:
             print(
                 "KILL: " + self.name + "_" + str(self.id) + " age:" + str(self.age) + " lexpect:" + str(self.lifeExpect))
         print (self.name + self.tags)
+        #todo fix me
         self.alive = False
 
 
@@ -252,6 +255,28 @@ class Prey(Animal):  # mean number of babies each step
         roll = npr.uniform()
         if roll < self.pgrow:
             world.Spawn(Prey(self.mgrow, self.stdgrow, self.mExpect, self.stdExpect, self.name), self.loc)
+
+
+class Disease:
+    ptransmit = 0  # if eat probability that transfer to newborn / killer
+
+    pleathality = 0  # probability that disease kills animal each tick
+    moveReduction = 1  # reduction is probablity of move
+
+    pmutate = 0  # probability that every symtom will get worse
+    mutation = 1
+    pimmunity = 0  # probability that animal will become immune to this disease each tick
+
+    def __init__(self, ptransmit, pletahility, pimmunity):
+        self.ptransmit = ptransmit
+        self.pleathality = pletahility
+        self.pimmunity = pimmunity
+
+    def step(self):
+        if npr.uniform() < self.pmutate:
+            self.pleathality *= self.mutation
+            self.moveReduction *= self.mutation
+            self.ptransmit *= self.mutation
 
 
 '''
