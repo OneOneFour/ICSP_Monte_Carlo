@@ -15,4 +15,4 @@ def lotkarra(s, t, alp, bet, gam, delt):
 def lotkavolterragraph(alpha, beta, gamma, delta, s0, stop=10, steps=10):
     t = np.linspace(0, stop, steps * stop)
     ans = scint.odeint(lotkarra, s0, t, args=(alpha, beta, gamma, delta))
-    return (ans, t)
+    return (t, ans)

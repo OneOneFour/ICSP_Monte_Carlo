@@ -1,24 +1,24 @@
-import sys
 import time
-from datetime import datetime as dt
 
 import numpy as np
 import numpy.random as npr
 
-import ProjectFunctions as pf
-import lotkavolterra as lv
+# sys.stdout = open("output/" + dt.now().ctime().replace(":", " ") + "output.txt", 'w')
+
 
 #sys.stdout = open("output/" + dt.now().ctime().replace(":", "") + "output.txt", 'w')
-seed = int(time.time())
-npr.seed(seed)
-print("SEED - " + str(seed))
 debug = False
 
 class World:
     gridsize = 2
     addQueue = None
     t = 1
-    def __init__(self, gridsize):
+
+    def __init__(self, gridsize, seed=None):
+        if seed is None:
+            seed = int(time.time())
+        npr.seed(seed)
+        print("SEED - " + str(seed))
         self.gridsize = gridsize
         self.addQueue = []
         self.preyCounter = []
@@ -110,10 +110,16 @@ class World:
             self.pos[x][y] = Prey(mgrow, stdgrow, mexpext, stdexpect, "Prey")
             self.pos[x][y].loc = [x, y]
 
-    def cap_recap(self, animals, location, size, time):
+    def cap_recap(self, loc, size):
+        animals = [a for a in self.get_objects(Animal) if a.alive]
         for beast in animals:
-            if loc[0] - size <= beast.loc[0] <= loc[0] + size and  loc[1] - size <= beast.loc[1] <= loc[1] + size:
-                beast.tags.extend(time)
+            if loc[0] - size <= beast.loc[0] <= loc[0] + size and loc[1] - size <= beast.loc[1] <= loc[1] + size:
+                beast.tags.append(self.t)
+
+    def on_exit(self):
+        animals = [a for a in self.get_objects(Animal) if a.alive]
+        for beast in animals:
+            print(self.name + str(self.tags))
 
     '''
     def showGrid(self):
@@ -147,6 +153,7 @@ class Animal:
         self.name = name
         self.mExpect = meanExpectancey
         self.stdExpect = stdExpectancy
+        self.tags.append(self.name)
 
     def step(self, world):
         self.age += 1
@@ -160,7 +167,7 @@ class Animal:
         if debug:
             print(
                 "KILL: " + self.name + "_" + str(self.id) + " age:" + str(self.age) + " lexpect:" + str(self.lifeExpect))
-        print (self.name + self.tags)
+        print(self.name + str(self.tags))
         #todo fix me
         self.alive = False
 

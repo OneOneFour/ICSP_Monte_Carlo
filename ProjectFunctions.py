@@ -45,3 +45,13 @@ def Graph(trials, events, p):
     plt.plot(range(events), new)
 
     plt.show()
+
+
+def savetags(fdir, tags):
+    fd = open(fdir, 'a')
+    for value in
+        if value == [-1]
+            fd.write("{}\n".format(value))
+        else
+            fd.write("{},".format(value))
+    fd.close()
