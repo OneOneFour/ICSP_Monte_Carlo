@@ -49,9 +49,9 @@ def Graph(trials, events, p):
 
 def savetags(fdir, tags):
     fd = open(fdir, 'a')
-    for value in
-        if value == [-1]
+    for value in tags:
+        if value == [-1]:
             fd.write("{}\n".format(value))
-        else
+        else:
             fd.write("{},".format(value))
     fd.close()
