@@ -121,7 +121,7 @@ class World:
     def on_exit(self):
         animals = [a for a in self.get_objects(Animal) if a.alive]
         for beast in animals:
-            pf.savetags(tags.txt, beast.tags)
+            pf.savetags("tags.txt", beast.tags)
 
     '''
     def showGrid(self):
@@ -169,7 +169,7 @@ class Animal:
         if debug:
             print(
                 "KILL: " + self.name + "_" + str(self.id) + " age:" + str(self.age) + " lexpect:" + str(self.lifeExpect))
-        pf.savetags(tags.txt, self.tags)
+        pf.savetags("tags.txt", self.tags)
         #todo fix me
         self.alive = False
 
