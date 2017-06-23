@@ -86,7 +86,7 @@ class MenuScreen(Screen):
         width = 35
         # TODO add a repeat switch
         self.runButton = sgc.Button(label="Run", pos=(self.window.width / 2, self.window.height - 60))
-        self.sizeScale = sgc.Scale(label="Size of the world grid", min=10, max=30, min_step=1, max_step=5, pos=(25, 25))
+        self.sizeScale = sgc.Scale(label="Size of the world grid", min=10, max=50, min_step=1, max_step=5, pos=(25, 25))
         self.killRangeSlider = sgc.Scale(label="Predator kill range slider", min=1, max=30, min_step=1, max_step=1,
                                          pos=(25, 25 + width * 6))
         self.initprey = sgc.Scale(label="Initial prey population", min=1, max=10 ** 2, min_step=1, max_step=10,
@@ -256,6 +256,7 @@ class WorldScreen(Screen):
         Screen.input(self, event)
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
             self.grphdata[2].savefig("output/" + dt.now().ctime().replace(":", " ") + "output.png")
+            plt.close(self.grphdata[2])
             self.window.pop_stack()
             #self.world.on_exit()
 
@@ -281,6 +282,10 @@ class WorldScreen(Screen):
         time = np.linspace(0, self.__world.t, self.steps * self.__world.t)
         fig.gca().plot(time, self.__world.preyCounter, "g-")
         fig.gca().plot(time, self.__world.predCounter, "r-")
+        fig.gca().set_xlabel("Time")
+        fig.gca().set_ylabel("Population")
+        if self.__world.t > 50:
+            fig.gca().set_xlim([self.__world.t - 50, self.__world.t])
         canvas = agg.FigureCanvasAgg(fig)
         canvas.draw()
         renderer = canvas.get_renderer()
