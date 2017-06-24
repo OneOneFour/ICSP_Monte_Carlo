@@ -50,7 +50,7 @@ def Graph(trials, events, p):
 def savetags(fdir, tags):
     fd = open(fdir, 'a')
     for value in tags:
-        if value == [-1]:
+        if value == tags[-1]:
             fd.write("{}\n".format(value))
         else:
             fd.write("{},".format(value))

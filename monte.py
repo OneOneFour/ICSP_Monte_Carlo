@@ -3,6 +3,8 @@ import time
 import numpy as np
 import numpy.random as npr
 
+import ProjectFunctions as pf
+
 # sys.stdout = open("output/" + dt.now().ctime().replace(":", " ") + "output.txt", 'w')
 
 
@@ -112,7 +114,6 @@ class World:
             self.pos[x][y].loc = [x, y]
 
 
-'''
     def cap_recap(self, loc, size):
         animals = [a for a in self.get_objects(Animal) if a.alive]
         for beast in animals:
@@ -122,9 +123,10 @@ class World:
     def on_exit(self):
         animals = [a for a in self.get_objects(Animal) if a.alive]
         for beast in animals:
-            #pf.savetags("tags.txt", beast.tags)
-            
-  
+            pf.savetags("tags.csv", beast.tags)
+
+
+'''  
     def showGrid(self):
         for key in self.population:
             print(key)
@@ -147,8 +149,6 @@ class Animal:
     caughtDiseases = []
     immunities = []
     #pmove = 0
-    tags =[]
-
     def __init__(self, meanExpectancey, stdExpectancy, name):
         self.id = Animal.count
         Animal.count += 1
@@ -156,6 +156,7 @@ class Animal:
         self.name = name
         self.mExpect = meanExpectancey
         self.stdExpect = stdExpectancy
+        self.tags = []
         self.tags.append(self.name)
 
     def step(self, world):
@@ -170,7 +171,7 @@ class Animal:
         if debug:
             print(
                 "KILL: " + self.name + "_" + str(self.id) + " age:" + str(self.age) + " lexpect:" + str(self.lifeExpect))
-        # pf.savetags("tags.txt", self.tags)
+        pf.savetags("tags.csv", self.tags)
         #todo fix me
         self.alive = False
 
@@ -288,89 +289,3 @@ class Disease:
             self.moveReduction *= self.mutation
             self.ptransmit *= self.mutation
 
-
-'''
-class Disease:  # mean number of babies each step
-    pspread = 0
-    pdeath0 = 0
-    ill = []
-
-    def __init__(self,pspread, pdeath0, loc=None):
-        if loc!=None
-            for beast in world.population:
-                if beast.loc == loc:
-                    if npr.rand() < pspread:
-                        ill.append(beast)
-        self.pspread = pspread
-        self.pdeath0 = pdeath0
-
-    def step(self):
-        for infected in self.ill:
-            for other in world.population:
-                if other.loc == infected.loc:
-                    if npr.rand() < self.pspread:
-                        #effects of infection TODO
-                        pass
-
-    def updateIll(self):
-        self.ill  = [elem for elem in self.ill if elem.alive == True]
-
-
-
-tscale = 1
-killRange = 1
-prey0, pred0 = 50, 75
-alpha, beta, delta, gamma = 0.67,1.33,1,1
-alpha1, beta1, delta1, gamma1 = alpha / tscale, beta / (pred0 * tscale), delta / (prey0 * tscale), gamma / tscale
-world = World(10)
-world.randSpawnPrey(alpha1, 0.05 / (alpha1 * tscale), 5 * tscale, tscale, prey0)
-world.randSpawnPredator(beta1 / (alpha1 + 1), 0.01 / tscale, delta1 / (beta1), beta1 / (delta1 * tscale), 1 / gamma1,
-                    tscale, pred0, killRange)
-'''
-
-##Remeber p = beta/(alpha+1)
-#i = 20 * tscale
-
-#for c in range(i):
-#    world.step()
-#    world.showGrid()
-
-#plt.plot(np.arange(i), world.preyCounter, 'b-', label="prey")
-#plt.plot(np.arange(i), world.predCounter, 'r-', label="predator")
-#plt.legend()
-#filename = "output/" + (datetime.datetime.now().ctime() + "output").replace(":", "")
-#plt.gcf().savefig(filename + ".png")
-#plt.show()
-#pf.saveValues(alpha, beta, gamma, delta, prey0, pred0, filename + ".csv")
-# Output
-'''
-def runSim(alpha, beta, gamma, delta, s0, stop=10, steps=10, scale=1):
-    world = World(25)
-    world.randSpawnPrey(alpha / (steps), 0.1 / (steps), 50 * steps, 1 * steps, int(s0[0] * scale))
-    world.randSpawnPredator(world.gridsize * beta / (steps * scale), (0.1 / (steps * scale)), delta / (beta),
-                            0.1 / scale, steps / gamma, 1.0 * steps, int(s0[1] * scale), 2)
-    for i in range(stop * steps):
-        world.step()
-    return [world.preyCounter, world.predCounter], np.linspace(0, stop, steps * stop)
-
-
-alpha, beta, gamma, delta, s0 = 0.67, 1.33, 1, 1, [1, 0.75]
-
-(eq, te) = lv.lotkavolterragraph(alpha, beta, gamma, delta, s0, 20, 10)
-(sim, ts) = runSim(alpha, beta, gamma, delta, s0, 20, 10, 100)
-
-fig, axes = plt.subplots(nrows=2, figsize=(20, 10))
-
-axes[0].plot(te, eq[:, 0], linewidth=1, label="prey")
-axes[0].plot(te, eq[:, 1], linewidth=1, label="pred")
-
-axes[1].plot(ts, sim[0], linewidth=1, label="prey")
-axes[1].plot(ts, sim[1], linewidth=1, label="pred")
-
-for ax in range(2):
-    axes[ax].set_xlabel("Time")
-    axes[ax].set_ylabel("Species Count")
-    axes[ax].legend()
-
-plt.show()
-'''

@@ -86,7 +86,8 @@ class MenuScreen(Screen):
         width = 35
         # TODO add a repeat switch
         self.runButton = sgc.Button(label="Run", pos=(self.window.width / 2, self.window.height - 60))
-        self.sizeScale = sgc.Scale(label="Size of the world grid", min=10, max=50, min_step=1, max_step=5, pos=(25, 25))
+        self.sizeScale = sgc.Scale(label="Size of the world grid", min=10, max=100, min_step=1, max_step=5,
+                                   pos=(25, 25))
         self.killRangeSlider = sgc.Scale(label="Predator kill range slider", min=1, max=30, min_step=1, max_step=1,
                                          pos=(25, 25 + width * 6))
         self.initprey = sgc.Scale(label="Initial prey population", min=1, max=10 ** 2, min_step=1, max_step=10,
@@ -105,11 +106,6 @@ class MenuScreen(Screen):
 
         self.repeats = sgc.Scale(label="Monte-Carlo Repeats", min=1, max=200, min_step=1, max_step=5, pos=(400, 150))
         self.repeatButtons = sgc.Button(label="Run Fast", pos=(self.run_lv_button.pos[0] + 200, self.runButton.pos[1]))
-
-
-
-
-
 
         self.runButton.add(0)
         self.sizeScale.add(1)
@@ -258,7 +254,7 @@ class WorldScreen(Screen):
             self.grphdata[2].savefig("output/" + dt.now().ctime().replace(":", " ") + "output.png")
             plt.close(self.grphdata[2])
             self.window.pop_stack()
-            #self.world.on_exit()
+            self.__world.on_exit()
 
     def draw(self, delta, screen):
         width = self.window.height / self.__world.gridsize
@@ -280,12 +276,13 @@ class WorldScreen(Screen):
     def get_pop_graph(self):
         fig = plt.figure(figsize=[8.5, 9], dpi=100)
         time = np.linspace(0, self.__world.t, self.steps * self.__world.t)
-        fig.gca().plot(time, self.__world.preyCounter, "g-")
-        fig.gca().plot(time, self.__world.predCounter, "r-")
+        fig.gca().plot(time, self.__world.preyCounter, "g-", label="Prey")
+        fig.gca().plot(time, self.__world.predCounter, "r-", label="Predator")
         fig.gca().set_xlabel("Time")
         fig.gca().set_ylabel("Population")
-        if self.__world.t > 50:
-            fig.gca().set_xlim([self.__world.t - 50, self.__world.t])
+        fig.gca().legend()
+        if self.__world.t > 100:
+            fig.gca().set_xlim([self.__world.t - 100, self.__world.t])
         canvas = agg.FigureCanvasAgg(fig)
         canvas.draw()
         renderer = canvas.get_renderer()
