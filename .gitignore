@@ -6,3 +6,11 @@ __pycache__/
 montepi.py
 output/
 test.py
+1D/
+build/
+dist/
+graphics.spec
+tags.csv
+tags.xls
+testing.py
+yourmum.txt
