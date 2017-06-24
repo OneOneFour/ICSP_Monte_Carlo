@@ -23,7 +23,7 @@ GREEN = (0, 255, 0)
 
 class Window():
     isRunning = True
-    width, height = 1700, 900
+    width, height = 960, 480
     screens = []
 
     def __init__(self):
@@ -274,7 +274,7 @@ class WorldScreen(Screen):
             screen.blit(grph, (self.window.height, 0))
 
     def get_pop_graph(self):
-        fig = plt.figure(figsize=[8.5, 9], dpi=100)
+        fig = plt.figure(figsize=[4.8, 4.8], dpi=100)
         time = np.linspace(0, self.__world.t, self.steps * self.__world.t)
         fig.gca().plot(time, self.__world.preyCounter, "g-", label="Prey")
         fig.gca().plot(time, self.__world.predCounter, "r-", label="Predator")
