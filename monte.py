@@ -45,6 +45,7 @@ class World:
         self.t += 1
         self.preyCounter.append(len(self.get_objects(Prey)))
         self.predCounter.append(len(self.get_objects(Predator)))
+        self.cap_recap([10, 10], 5)
 
     def Spawn(self, animal, ploc):
         if debug:
