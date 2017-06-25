@@ -28,24 +28,24 @@ class World:
         self.pos = np.empty((gridsize, gridsize), dtype=Animal)
 
     def step(self):
-        if debug:
+        if debug: #debug = true was used to log all animal interactions for troubleshooting purposes
             print("---------- BEGIN STEP " + str(self.t) + " ----------")
-        self.addQueue.clear()
+        self.addQueue.clear() #creates an empty array newly birthed objects can be stored
         if debug:
             print(
                 "Prey count:" + str(self.preyCounter[self.t - 1]) + " Pred count:" + str(self.predCounter[self.t - 1]))
-        animals = self.get_objects(Animal)
-        for ani in animals:
+        animals = self.get_objects(Animal) #generates a list of all animals
+        for ani in animals: #calls the pred/prey specific processes
             ani.step(self)
-        for item in self.addQueue:
+        for item in self.addQueue: #adds the newly 'born' animals to the population
             self.birth(item[0], item[1])
         for ani in animals:
             if not ani.alive:
-                self.pos[ani.loc[0]][ani.loc[1]] = None  # Hasta la vista
-        self.t += 1
-        self.preyCounter.append(len(self.get_objects(Prey)))
-        self.predCounter.append(len(self.get_objects(Predator)))
-        self.cap_recap([10, 10], 5)
+                self.pos[ani.loc[0]][ani.loc[1]] = None  #removes dead animals from the grid
+        self.t += 1 #keep track of how many steps the simulation has been running for
+        self.preyCounter.append(len(self.get_objects(Prey))) #keeps track of the number of prey
+        self.predCounter.append(len(self.get_objects(Predator))) #keeps track of the number of predators
+        self.cap_recap([10, 10], 5) #used to test the accuracy of the capture-recapture sampling techinique (DNF)
 
     def Spawn(self, animal, ploc):
         if debug:
@@ -172,17 +172,10 @@ class Animal:
             print(
                 "KILL: " + self.name + "_" + str(self.id) + " age:" + str(self.age) + " lexpect:" + str(self.lifeExpect))
         pf.savetags("tags.csv", self.tags)
-        #todo fix me
         self.alive = False
 
 
     def move(self, world):
-        #if self.move > npr.uniform():
-        #self.loc = [(elem+(npr.randint(3)-1))%world.gridsize for elem in loc] TODO sort this out, into one line
-        #self.loc[1] += (npr.randint(3)-1)
-        #self.loc[1] %= world.gridsize
-        #self.loc[0] += (npr.randint(3)-1)
-        #self.loc[0] %= world.gridsize
         either = [-1, 0, 1]
         dest = [(0, 0)]
         for x in either:
