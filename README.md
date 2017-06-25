@@ -6,3 +6,7 @@ File Guide:
   monte.py  -  contains the code that creates the objects of world, predators and prey, with their respective processes (e.g. movement, birth, death etc.
   graphics.py  -  contains the code that manages the running of the simulation, contains the main algorithm. Generates the GUI.
   projectfunctions.py  -  contains functions tailored to the project 
+  
+  Comments:
+  
+  DNF - did not finish. Refers to an extension that was begun but that is currentlly not completely finished.
