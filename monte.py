@@ -162,10 +162,10 @@ class Animal:
     def step(self, world):
         self.age += 1
         if self.age > self.lifeExpect:
-            self.kill()
+            self.kill() #kills the animal if it is older that its specfic, individual lifespan.
             return
         if self.alive:
-            self.move(world)
+            self.move(world) #gives the animal the oppurtunity to move.
 
     def kill(self):
         if debug:
@@ -216,22 +216,21 @@ class Predator(Animal):
         Animal.step(self, world)
         if not self.alive:
             return
-        self.eat(world.get_objects(Prey), world)  # get the prey
+        self.eat(world.get_objects(Prey), world)  # generates a list of the prey that could be eaten and passes to Predator.eat
 
     def eat(self, preytot, world):
         prey = []
         for x in np.arange(-self.killRange, self.killRange + 1):
             for y in np.arange(-self.killRange, self.killRange + 1):
-                if isinstance(world.pos[(self.loc[0] + x) % world.gridsize][(self.loc[1] + y) % world.gridsize], Prey):
+                if isinstance(world.pos[(self.loc[0] + x) % world.gridsize][(self.loc[1] + y) % world.gridsize], Prey): #adds the prey to the list if it is within the kill range.
                     prey.append(world.pos[(self.loc[0] + x) % world.gridsize][(self.loc[1] + y) % world.gridsize])
 
-        for meal in prey:
-            if self.pkill > npr.uniform():
+        for meal in prey: #gives the predator the oppurtunity to kill each prey within its range
+            if self.pkill > npr.uniform(): #rolls the dice to see if the prey is caught
                 meal.kill()
-                if npr.uniform() < self.pbirth:
+                if npr.uniform() < self.pbirth: #rolls the dice to see if a new predator is born (if the prey is caught)
                     world.Spawn(Predator(self.mkill, self.stdkill, self.mgrow, self.stdgrow,
-                                         self.mExpect, self.stdExpect, self.name, self.killRange), self.loc)
-                    # Spawn Baby next step
+                                         self.mExpect, self.stdExpect, self.name, self.killRange), self.loc) # Spawn Baby next step
 
 
 
