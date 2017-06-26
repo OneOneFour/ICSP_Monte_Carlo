@@ -3,6 +3,8 @@ import time
 import numpy as np
 import numpy.random as npr
 
+import ProjectFunctions as pf
+
 # sys.stdout = open("output/" + dt.now().ctime().replace(":", " ") + "output.txt", 'w')
 
 
@@ -26,24 +28,24 @@ class World:
         self.pos = np.empty((gridsize, gridsize), dtype=Animal)
 
     def step(self):
-        if debug:
+        if debug: #debug = true was used to log all animal interactions for troubleshooting purposes
             print("---------- BEGIN STEP " + str(self.t) + " ----------")
-        self.addQueue.clear()
+        self.addQueue.clear() #creates an empty array newly birthed objects can be stored
         if debug:
             print(
                 "Prey count:" + str(self.preyCounter[self.t - 1]) + " Pred count:" + str(self.predCounter[self.t - 1]))
-        animals = self.get_objects(Animal)
-        for ani in animals:
+        animals = self.get_objects(Animal) #generates a list of all animals
+        for ani in animals: #calls the pred/prey specific processes
             ani.step(self)
-        for item in self.addQueue:
+        for item in self.addQueue: #adds the newly 'born' animals to the population
             self.birth(item[0], item[1])
         for ani in animals:
             if not ani.alive:
-                self.pos[ani.loc[0]][ani.loc[1]] = None
-        self.t += 1
-        self.preyCounter.append(len(self.get_objects(Prey)))
-        self.predCounter.append(len(self.get_objects(Predator)))
-        # self.cap_recap([10, 10], 5)
+                self.pos[ani.loc[0]][ani.loc[1]] = None  #removes dead animals from the grid
+        self.t += 1 #keep track of how many steps the simulation has been running for
+        self.preyCounter.append(len(self.get_objects(Prey))) #keeps track of the number of prey
+        self.predCounter.append(len(self.get_objects(Predator))) #keeps track of the number of predators
+        self.cap_recap([10, 10], 5) #used to test the accuracy of the capture-recapture sampling techinique (DNF)
 
     def Spawn(self, animal, ploc):
         if debug:
@@ -161,10 +163,10 @@ class Animal:
     def step(self, world):
         self.age += 1
         if self.age > self.lifeExpect:
-            self.kill()
+            self.kill() #kills the animal if it is older that its specfic, individual lifespan.
             return
         if self.alive:
-            self.move(world)
+            self.move(world) #gives the animal the oppurtunity to move.
 
     def kill(self):
         if debug:
@@ -176,12 +178,7 @@ class Animal:
 
 
     def move(self, world):
-        #if self.move > npr.uniform():
-        #self.loc = [(elem+(npr.randint(3)-1))%world.gridsize for elem in loc] TODO sort this out, into one line
-        #self.loc[1] += (npr.randint(3)-1)
-        #self.loc[1] %= world.gridsize
-        #self.loc[0] += (npr.randint(3)-1)
-        #self.loc[0] %= world.gridsize
+
         either = [-1, 0, 1]
         dest = [(0, 0)]
         for x in either:
@@ -222,22 +219,21 @@ class Predator(Animal):
         Animal.step(self, world)
         if not self.alive:
             return
-        self.eat(world.get_objects(Prey), world)  # get the prey
+        self.eat(world.get_objects(Prey), world)  # generates a list of the prey that could be eaten and passes to Predator.eat
 
     def eat(self, preytot, world):
         prey = []
         for x in np.arange(-self.killRange, self.killRange + 1):
             for y in np.arange(-self.killRange, self.killRange + 1):
-                if isinstance(world.pos[(self.loc[0] + x) % world.gridsize][(self.loc[1] + y) % world.gridsize], Prey):
+                if isinstance(world.pos[(self.loc[0] + x) % world.gridsize][(self.loc[1] + y) % world.gridsize], Prey): #adds the prey to the list if it is within the kill range.
                     prey.append(world.pos[(self.loc[0] + x) % world.gridsize][(self.loc[1] + y) % world.gridsize])
 
-        for meal in prey:
-            if self.pkill > npr.uniform():
+        for meal in prey: #gives the predator the oppurtunity to kill each prey within its range
+            if self.pkill > npr.uniform(): #rolls the dice to see if the prey is caught
                 meal.kill()
-                if npr.uniform() < self.pbirth:
+                if npr.uniform() < self.pbirth: #rolls the dice to see if a new predator is born (if the prey is caught)
                     world.Spawn(Predator(self.mkill, self.stdkill, self.mgrow, self.stdgrow,
-                                         self.mExpect, self.stdExpect, self.name, self.killRange), self.loc)
-                    # Spawn Baby next step
+                                         self.mExpect, self.stdExpect, self.name, self.killRange), self.loc) # Spawn Baby next step
 
 
 
