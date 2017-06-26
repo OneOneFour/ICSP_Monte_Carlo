@@ -3,8 +3,6 @@ import time
 import numpy as np
 import numpy.random as npr
 
-import ProjectFunctions as pf
-
 # sys.stdout = open("output/" + dt.now().ctime().replace(":", " ") + "output.txt", 'w')
 
 
@@ -41,11 +39,11 @@ class World:
             self.birth(item[0], item[1])
         for ani in animals:
             if not ani.alive:
-                self.pos[ani.loc[0]][ani.loc[1]] = None  # Hasta la vista
+                self.pos[ani.loc[0]][ani.loc[1]] = None
         self.t += 1
         self.preyCounter.append(len(self.get_objects(Prey)))
         self.predCounter.append(len(self.get_objects(Predator)))
-        self.cap_recap([10, 10], 5)
+        # self.cap_recap([10, 10], 5)
 
     def Spawn(self, animal, ploc):
         if debug:
@@ -114,6 +112,7 @@ class World:
             self.pos[x][y].loc = [x, y]
 
 
+'''
     def cap_recap(self, loc, size):
         animals = [a for a in self.get_objects(Animal) if a.alive]
         for beast in animals:
@@ -126,7 +125,7 @@ class World:
             pf.savetags("tags.csv", beast.tags)
 
 
-'''  
+
     def showGrid(self):
         for key in self.population:
             print(key)
@@ -156,8 +155,8 @@ class Animal:
         self.name = name
         self.mExpect = meanExpectancey
         self.stdExpect = stdExpectancy
-        self.tags = []
-        self.tags.append(self.name)
+        # self.tags = []
+        #self.tags.append(self.name)
 
     def step(self, world):
         self.age += 1
@@ -171,7 +170,7 @@ class Animal:
         if debug:
             print(
                 "KILL: " + self.name + "_" + str(self.id) + " age:" + str(self.age) + " lexpect:" + str(self.lifeExpect))
-        pf.savetags("tags.csv", self.tags)
+        #pf.savetags("tags.csv", self.tags)
         #todo fix me
         self.alive = False
 

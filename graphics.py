@@ -177,7 +177,7 @@ class MenuScreen(Screen):
                     world = monte.World(self.sizeScale.value, int(time))
                     world.randSpawnPrey(alp, 0.1, 50, 1, self.initprey.value)
                     world.randSpawnPredator(bet, 0.1 / self.initpred.value,
-                                            delt / bet * (self.initpred.value / self.initprey.value),
+                                            delt / bet,
                                             0.1 * self.initprey.value / self.initpred.value,
                                             1 / gam * (self.sizeScale.value / (2 * self.killRangeSlider.value + 1)),
                                             1.0,
@@ -190,17 +190,25 @@ class MenuScreen(Screen):
                 # get median - sort each point in terms of value
                 mstprey = np.swapaxes(mstprey, 0, 1)
                 mstpred = np.swapaxes(mstpred, 0, 1)
-                for t in range(len(mstprey)):
-                    mstprey[t] = np.sort(mstprey[t])
-                    mstpred[t] = np.sort(mstpred[t])
+                meanPrey = np.array([np.mean(a) for a in mstprey])
+                meanPred = np.array([np.mean(a) for a in mstpred])
+                predErr = np.array([sps.sem(a) for a in mstpred])
+                preyErr = np.array([sps.sem(a) for a in mstprey])
                 # plot median graph and percentiles
+                t = np.arange(0, self.lv_timelimit.value + 1)
                 preypercent = plt.figure(figsize=[4.9, 4.9], dpi=100)
                 predpercent = plt.figure(figsize=[4.9, 4.9], dpi=100)
-                for percentile in np.arange(0.25, 1, 0.25):
-                    preypercent.gca().plot(np.arange(0, self.lv_timelimit.value + 1),
-                                           mstprey[:, int(percentile * self.repeats.value)])
-                    predpercent.gca().plot(np.arange(0, self.lv_timelimit.value + 1),
-                                           mstpred[:, int(percentile * self.repeats.value)])
+                preypercent.gca().plot(t, meanPrey, 'g-')
+                preypercent.gca().plot(t, meanPrey + 2 * preyErr, 'g:')
+                preypercent.gca().plot(t, meanPrey - 2 * preyErr, 'g:')
+                preypercent.gca().set_xlabel("Time")
+                preypercent.gca().set_ylabel("Population")
+
+                predpercent.gca().plot(t, meanPred, 'r-')
+                predpercent.gca().plot(t, meanPred + 2 * predErr, 'r:')
+                predpercent.gca().plot(t, meanPred - 2 * predErr, 'r:')
+                predpercent.gca().set_xlabel("Time")
+                predpercent.gca().set_ylabel("Population")
                 preypercent.savefig("output/" + dt.now().ctime().replace(":", " ") + "mc_pry_output.png")
                 predpercent.savefig("output/" + dt.now().ctime().replace(":", " ") + "mc_pred_output.png")
                 plt.close(preypercent)
