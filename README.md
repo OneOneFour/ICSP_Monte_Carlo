@@ -21,7 +21,7 @@ A simulation of how animal populations change over time using the Monte-Carlo me
   
   
   ```python
-    import time
+import time
 
 import numpy as np
 import scipy.integrate as scint
