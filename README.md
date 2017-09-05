@@ -1,5 +1,5 @@
 # ICSP Monte Carlo
-A simulation of how animal populations change over time using the Monte-Carlo method and the Lotkarra-Voltara equations. First Year IC summer project by Robert King and Matthew Cotton
+A simulation of how animal populations change over time using the Monte-Carlo method and the Lotkarra-Voltara equations. First Year IC summer project by Robert King and Matthew W Cotton
 
 **File Guide:**
 
@@ -15,7 +15,7 @@ A simulation of how animal populations change over time using the Monte-Carlo me
 
 **Lotka-Volterra Equations**
 
-  The starting point for this project was the Lotka-Volterra equations which are used to simulate how the populations of a predator and a prey species evolve over time. The Lotka-Volterra equations assume an enviroment where all predators and prey can interact with one another and where there is a *suitably* large inital population of both species such that the populations can be treated as continous variables (whereas in reality they are actually discrete). 
+  The starting point for this project was the Lotka-Volterra equations which are used to simulate how the populations of a predator and a prey species evolve over time. The Lotka-Volterra equations assume an enviroment where all predators and prey can interact with one another and where there is a *suitably* large initial population of both species such that the populations can be treated as continous variables (whereas in reality they are actually discrete). 
  
   One of the first things we undertook in this project was to create a set of plots to test the Lotka-Volterra model. These were created in python 3.0 using matplotlib and scipy, both free and open source libraries.
   
