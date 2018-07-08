@@ -1,6 +1,6 @@
 import matplotlib
 
-matplotlib.use("Agg")
+# matplotlib.use("Agg")
 
 import pygame
 import sgc
@@ -8,6 +8,8 @@ from sgc.locals import *
 import monte
 import numpy as np
 import time as tme
+from multiprocessing import Pool
+import os
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
 import matplotlib.backends.backend_agg as agg
@@ -19,6 +21,21 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
+
+
+def run_repeats(values, time):
+    world = monte.World(values['sizeScale'], int(time))
+    world.randSpawnPrey(values['alp'], 0.1, 50, 1, values['initprey'])
+    world.randSpawnPredator(values['bet'], 0.1 / values['initpred'],
+                            values['delt'] / values['bet'],
+                            0.1 * values['initprey'] / values['initpred'],
+                            1 / values['gam'] * (values['sizeScale'] / (2 * values['killRange'] + 1)),
+                            1.0,
+                            values['initpred'], values['killRange'])
+    for t_local in range(values['limit']):
+        world.step()
+
+    return world.predCounter, world.preyCounter
 
 
 class Window():
@@ -144,7 +161,7 @@ class MenuScreen(Screen):
                                              self.initprey.value)
                 self.tmp_world.randSpawnPredator(float(self.beta.text) / self.initpred.value, 0.1 / self.initpred.value,
                                                  float(self.delta.text) / float(self.beta.text) * (
-                                                 self.initpred.value / self.initprey.value),
+                                                         self.initpred.value / self.initprey.value),
                                                  0.1 * (self.initpred.value / self.initprey.value),
                                                  1 / float(self.gamma.text), 1, self.initpred.value,
                                                  self.killRangeSlider.value)
@@ -173,20 +190,18 @@ class MenuScreen(Screen):
                 mstprey = []
                 mstpred = []
                 time = tme.time()
+                vals = {'initpred': self.initpred.value, 'initprey': self.initprey.value,
+                        'killRange': self.killRangeSlider.value, 'sizeScale': self.sizeScale.value,
+                        'limit': self.lv_timelimit.value, 'alp': alp, 'bet': bet, 'gam': gam, 'delt': delt}
+
+                a = []
                 for i in range(self.repeats.value):
-                    world = monte.World(self.sizeScale.value, int(time))
-                    world.randSpawnPrey(alp, 0.1, 50, 1, self.initprey.value)
-                    world.randSpawnPredator(bet, 0.1 / self.initpred.value,
-                                            delt / bet,
-                                            0.1 * self.initprey.value / self.initpred.value,
-                                            1 / gam * (self.sizeScale.value / (2 * self.killRangeSlider.value + 1)),
-                                            1.0,
-                                            self.initpred.value, self.killRangeSlider.value)
-                    for t in range(self.lv_timelimit.value):
-                        world.step()
-                    mstpred.append(world.predCounter)
-                    mstprey.append(world.preyCounter)
+                    a.append(pool.apply_async(run_repeats, args=(vals, time,)))
                     time += 1
+                for a_res in a:
+                    b = a_res.get()
+                    mstpred.append(b[0])
+                    mstprey.append(b[1])
                 # get median - sort each point in terms of value
                 mstprey = np.swapaxes(mstprey, 0, 1)
                 mstpred = np.swapaxes(mstpred, 0, 1)
@@ -225,6 +240,7 @@ class MenuScreen(Screen):
 
         return alpha, beta, delta, gamma
 '''
+
     def draw(self, delta, screen):
         pass
 
@@ -262,7 +278,6 @@ class WorldScreen(Screen):
             self.grphdata[2].savefig("output/" + dt.now().ctime().replace(":", " ") + "output.png")
             plt.close(self.grphdata[2])
             self.window.pop_stack()
-            self.__world.on_exit()
 
     def draw(self, delta, screen):
         width = self.window.height / self.__world.gridsize
@@ -298,8 +313,7 @@ class WorldScreen(Screen):
 
     def update(self, delta):
         self.timeToStep -= delta
-        #self.__world.cap_recap([self.__world.gridsize / 2, self.__world.gridsize / 2], 2)
-
+        # self.__world.cap_recap([self.__world.gridsize / 2, self.__world.gridsize / 2], 2)
 
         if self.timeToStep <= 0:
             self.__world.step()
@@ -309,4 +323,6 @@ class WorldScreen(Screen):
             self.grphdata = self.get_pop_graph()
 
 
-w = Window()
+if __name__ == '__main__':
+    pool = Pool(processes=os.cpu_count())
+    w = Window()

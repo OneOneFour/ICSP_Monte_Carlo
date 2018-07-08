@@ -45,7 +45,7 @@ class World:
         self.t += 1 #keep track of how many steps the simulation has been running for
         self.preyCounter.append(len(self.get_objects(Prey))) #keeps track of the number of prey
         self.predCounter.append(len(self.get_objects(Predator))) #keeps track of the number of predators
-        self.cap_recap([10, 10], 5) #used to test the accuracy of the capture-recapture sampling techinique (DNF)
+        # self.cap_recap([10, 10], 5) used to test the accuracy of the capture-recapture sampling techinique (DNF)
 
     def Spawn(self, animal, ploc):
         if debug:
