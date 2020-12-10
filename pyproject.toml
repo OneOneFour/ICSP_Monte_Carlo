@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "icsp_monte_carlo"
+version = "0.1.0"
+description = "First Year Imperial College Physics summer project"
+authors = ["Robert King <robertkng104@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+numpy = "1.19.3"
+matplotlib = "^3.3.3"
+pygame = "^2.0.0"
+simplegc = {path = "sgc"}
+scipy = "^1.5.4"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
